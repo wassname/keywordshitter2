@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <link rel='stylesheet' type='text/css' href='' />
+        <style>
+body, textarea {
+  text-rendering:optimizeLegibility;
+  background:#fff;
+  font:normal 13px/15px 'Helvetica';
+  margin:0;
+  padding:0;
+  }
+textarea {
+  float:left;
+  height:300px;
+  width:140px;
+  }
+#chart {
+    float:left;
+}
+circle {
+    fill:#CCF3FF;
+}
+text { fill: #000; }
+path.link {
+  fill: none;
+  stroke: #999;
+  stroke-width: 2px;
+}
+</style>
+    </head>
+    <body>
+        <textarea id='input'></textarea>
+        <div id='chart'></div>
+        <script src="http://d3js.org/d3.v2.js"></script>
+<script>
+var m = [20, 120, 20, 120],
+    w = 490 - m[1] - m[3],
+    h = 300 - m[0] - m[2],
+    i = 0,
+    root;
+
+var tree = d3.layout.tree()
+    .size([h, w]);
+
+var diagonal = d3.svg.diagonal()
+    .projection(function(d) { return [d.y, d.x]; });
+
+function d3ize(tree, n) {
+    var nt = {name: n || ''};
+    if (Object.keys(tree).length) {
+        nt.children = [];
+        for (var k in tree) {
+            nt.children.push(d3ize(tree[k], k));
+        }
+    }
+    return nt;
+}
+
+function trie(keys) {
+    var trie = {};
+    for (var i = 0; i < keys.length; i++) {
+        var pos = trie;
+        for (var j = 0; j < keys[i].length; j++) {
+            if (pos[keys[i][j]] === undefined) {
+                pos[keys[i][j]] = {};
+            }
+            pos = pos[keys[i][j]];
+        }
+    }
+    return trie;
+}
+
+var vis = d3.select("#chart").append("svg:svg")
+    .attr("width", w + m[1] + m[3])
+    .attr("height", h + m[0] + m[2])
+  .append("svg:g")
+    .attr("transform", "translate(" + m[3] + "," + m[0] + ")");
+
+function update() {
+  var duration = d3.event && d3.event.altKey ? 5000 : 500;
+
+  // Compute the new tree layout.
+  var nodes = tree.nodes(root).reverse();
+
+  // Normalize for fixed-depth.
+  nodes.forEach(function(d) { d.y = d.depth * 20; });
+
+  // Update the nodes…
+  var node = vis.selectAll("g.node")
+      .data(nodes, function(d) { return d.id || (d.id = ++i); });
+
+  // Enter any new nodes at the parent's previous position.
+  var nodeEnter = node.enter().append("svg:g")
+      .attr("class", "node");
+
+  nodeEnter.append("svg:circle");
+
+  nodeEnter.append("svg:text")
+      .attr("x", function(d) { return 0; })
+      .attr("dy", function(d) { return 3; })
+      .attr("text-anchor", function(d) { return "middle"; })
+      .text(function(d) { return d.name; });
+
+  // Transition nodes to their new position.
+  var nodeUpdate = node.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
+
+  nodeUpdate.select("circle")
+      .attr("r", 9);
+
+  var link = vis.selectAll("path.link")
+      .data(tree.links(nodes), function(d) { return d.target.id; });
+
+  link.enter().insert("svg:path", "g")
+      .attr("class", "link")
+      .attr("d", diagonal);
+
+  link.transition()
+      .duration(duration)
+      .attr("d", diagonal);
+
+  link.exit().remove();
+  node.exit().remove();
+}
+
+function run(value) {
+    root = d3ize(trie(value.split('\n')));
+    root.x0 = h / 2;
+    root.y0 = 0;
+    update(root);
+}
+
+d3.select('#input').on('keyup', function() {
+    run(this.value);
+});
+
+sample_text = 'type\nhere';
+
+var interi = 0, inter = window.setInterval(function() {
+    d3.select('#input').property('value', sample_text.slice(0, interi));
+    run(sample_text.slice(0, interi));
+    interi++;
+    if (interi > sample_text.length) window.clearInterval(inter);
+}, 100);
+
+</script>
+    </body>
+</html>
