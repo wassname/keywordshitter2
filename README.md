@@ -11,14 +11,13 @@ Ways to visualise:
 
 # TODO:
 
-change how it stems searches
+datatables for visualisation - done
+with length column  - done
+change how it stems searches  - done
+cache to indexdb- done
+hide advanced options- done
+remember how many done on this ip- done
 
-datatables for visualisation
 
-with length column
-
+add bing etc
 keywordkeg
-
-cache to indexdb
-
-remember how many done on this ip
