@@ -140,12 +140,12 @@ function StartJob() {
 
         doWork = true;
         $('#startjob').val('Stop Job').text('Stop shitting').addClass('btn-danger');
-        $('#input').hide();
+        // $('#input').hide();
 
     } else {
         doWork = false;
         $('#startjob').val('Start Job').text('Start shitting').removeClass('btn-danger');
-        $('#input').show();
+        // $('#input').show();
         FilterAndDisplay();
         table.draw();
         table.columns.adjust();
@@ -159,8 +159,13 @@ function DoJob() {
             var currentKw = keywordsToQuery[keywordsToQueryIndex];
             if (currentKw[currentKw.length - 1] != '✓') {
                 QueryKeyword(currentKw);
+                keywordsToQueryIndex++;
+            } else {
+                // we didn't do a query immediatly go to next query
+                keywordsToQueryIndex++;
+                DoJob();
             }
-            keywordsToQueryIndex++;
+
         } else {
             if (numOfInitialKeywords != keywordsToQuery.length) {
                 doWork = false;
@@ -218,10 +223,13 @@ function loadFromDB(){
         .getAll()
         .onsuccess = function(e) {
             if (e.target.result.length){
-                var retList = [];
+                table.data(e.target.result);
+                var data =[];
                 for (var i = 0; i < e.target.result.length; i++) {
-                    displayResults([e.target.result[i].keyword],e.target.result[i].search,false);
+                    var d = e.target.result[i];
+                    data.push([i,d.keyword,d.Length,null,null,d.search]);
                 }
+                table.rows.add(data);
             }
             table.draw(false);
         };
@@ -325,8 +333,12 @@ function QueryKeyword(search) {
                     retList.push(e.target.result[i].keyword);
                 }
                 displayResults(retList,search);
+                markAsDone(search);
                 permuteResultsToQueue(retList);
                 queryLock = false;
+
+                // we didn't do a query immediatly go to next query
+                DoJob();
             }
             else {
                 // search not done, lets do the query
@@ -350,6 +362,9 @@ function QueryKeyword(search) {
 
                         queryLock = false;
 
+                    },
+                    error: function(){
+                        queryLock = false;
                     }
                 });
             }
