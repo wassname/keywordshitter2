@@ -1,6 +1,6 @@
 # Keywordshitter2 - The Bulk Keyword Tool
 
-An update of the beloved keyword generation tool [keywordshitter](keywordshitter.com). [Demo here](http://wassname.github.io/keywordshitter2/).
+An update of the beloved keyword generation tool keywordshitter.com. [Try it here.](http://wassname.github.io/keywordshitter2/).
 
 #New features:
 
@@ -13,14 +13,15 @@ An update of the beloved keyword generation tool [keywordshitter](keywordshitter
 
 - Shit theme
 - Simple
-- Humor suitable for a todler
+- Humor suitable for a toddler
+- Cunningly lower user expectations to zero, then exceed them
 
 ## Coming soon (TM):
 
 - Multiple services
 - Updated toilet logo
 - Less bugs
-- CPC and Volume integration from KeywordKeg
+- CPC and Volume integration possibly
 
 
 # License

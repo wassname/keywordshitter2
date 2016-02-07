@@ -3332,25 +3332,25 @@ fieldset[disabled] .btn-warning.focus {
   background-color: #000000;
 }
 .btn-danger {
-  color: #000000;
+  color: #ffffff;
   background-color: #d9230f;
   border-color: #d9230f;
 }
 .btn-danger:focus,
 .btn-danger.focus {
-  color: #000000;
+  color: #ffffff;
   background-color: #a91b0c;
   border-color: #621007;
 }
 .btn-danger:hover {
-  color: #000000;
+  color: #ffffff;
   background-color: #a91b0c;
   border-color: #a01a0b;
 }
 .btn-danger:active,
 .btn-danger.active,
 .open > .dropdown-toggle.btn-danger {
-  color: #000000;
+  color: #ffffff;
   background-color: #a91b0c;
   border-color: #a01a0b;
 }
@@ -3363,7 +3363,7 @@ fieldset[disabled] .btn-warning.focus {
 .btn-danger:active.focus,
 .btn-danger.active.focus,
 .open > .dropdown-toggle.btn-danger.focus {
-  color: #000000;
+  color: #ffffff;
   background-color: #881609;
   border-color: #621007;
 }
@@ -3386,7 +3386,7 @@ fieldset[disabled] .btn-danger.focus {
 }
 .btn-danger .badge {
   color: #d9230f;
-  background-color: #000000;
+  background-color: #ffffff;
 }
 .btn-link {
   color: #d9831f;

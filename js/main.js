@@ -117,12 +117,11 @@ window.setInterval(DoJob, 750);
 
 function StartJob() {
     if (doWork === false) {
-        keywordsToDisplay = [];
         hashMapResults = {};
         keywordsToQuery = [];
         keywordsToQueryIndex = 0;
 
-        // hashMapResults[""] = 1;
+        hashMapResults[""] = 1;
         // hashMapResults[" "] = 1;
         // hashMapResults["  "] = 1;
 
@@ -134,17 +133,7 @@ function StartJob() {
         var i = 0;
         for (i = 0; i < ks.length; i++) {
             keywordsToQuery[keywordsToQuery.length] = ks[i];
-            // keywordsToDisplay[keywordsToDisplay.length] = {
-            //     Keyword: ks[i]
-            // };
 
-            // var j = 0;
-            // for (j = 0; j < 26; j++) {
-            //     var chr = String.fromCharCode(97 + j);
-            //     var currentx = ks[i] + ' ' + chr;
-            //     keywordsToQuery[keywordsToQuery.length] = currentx;
-            //     hashMapResults[currentx] = 1;
-            // }
         }
         numOfInitialKeywords = keywordsToQuery.length;
         FilterAndDisplay();
@@ -196,25 +185,25 @@ function permuteResultsToQueue(retList, search){
     });
 
     for (var i = 0; i < retList.length; i++) {
-        var currents = CleanVal(retList[i]);
-        if (!hashMapResults[currents]){
-            hashMapResults[currents] = 1;
+        var cleanKw = CleanVal(retList[i]);
+        if (cleanKw.length && !hashMapResults[cleanKw]){
+            hashMapResults[cleanKw] = 1;
 
             // add base suggestion to queue
-            if (currents!==search)
-                keywordsToQuery[keywordsToQuery.length] = currents;
+            if (cleanKw!==search)
+                keywordsToQuery[keywordsToQuery.length] = cleanKw;
 
             // add prefix permutations
             for (var k = 0; k < prefixes.length; k++) {
                 var chr = prefixes[k];
-                var currentx = chr + ' ' + currents;
+                var currentx = chr + ' ' + cleanKw;
                 keywordsToQuery[keywordsToQuery.length] = currentx;
                 hashMapResults[currentx] = 1;
             }
             // add suffix permutations
             for (var j = 0; j < prefixes.length; j++) {
                 var chr = prefixes[j];
-                var currentx = currents + ' ' + chr;
+                var currentx = cleanKw + ' ' + chr;
                 keywordsToQuery[keywordsToQuery.length] = currentx;
                 hashMapResults[currentx] = 1;
             }
@@ -222,26 +211,58 @@ function permuteResultsToQueue(retList, search){
     }
 }
 
+/** Display data from db upon pressing load button **/
+function loadFromDB(){
+    var reqObj = db.transaction(["suggestions"],"readonly").
+        objectStore("suggestions")
+        .getAll()
+        .onsuccess = function(e) {
+            if (e.target.result.length){
+                var retList = [];
+                for (var i = 0; i < e.target.result.length; i++) {
+                    displayResults([e.target.result[i].keyword],e.target.result[i].search,false);
+                }
+            }
+            table.draw(false);
+        };
+        reqObj.onerror=errorHandler;
+}
+
 /** Display results **/
-function displayResults(retList, search){
+function displayResults(retList, search, dontDisplay){
+
+
+
+
+
+
     for (var i = 0; i < retList.length; i++) {
         var  cleanKw = CleanVal(retList[i]);
-        // display
-        table.row.add([
-            table.rows()[0].length,
-            cleanKw,
-            cleanKw.length,
-            undefined,
-            undefined,
-            search]);
-    }
-    table.draw(false);
 
-    // FilterAndDisplay();
-    //
-    // var textarea = document.getElementById("input");
-    // textarea.scrollTop = textarea.scrollHeight;
-    //
+        // we get an annoying popup alert if we add undefined values, catch them
+        if (cleanKw===undefined||table.rows()[0].length===undefined||cleanKw.length===undefined,search===undefined){
+            console.error('Undefined values',{
+                id: table.rows()[0].length,
+                keyword: cleanKw,
+                length: cleanKw? cleanKw.length: undefined,
+                search:search
+            });
+            continue;
+
+        } else if (cleanKw!==undefined && cleanKw.length){
+        // Check if suggestion is already displayed before adding
+        // var matches = table.data().filter(function(v){return v[1]===cleanKw && v[5]==search;}).count();
+        // if (!matches)
+            table.row.add([
+                table.rows()[0].length,
+                cleanKw,
+                cleanKw.length,
+                null,
+                null,
+                search]);
+        }
+    }
+    if (!dontDisplay) table.draw(false);
 }
 
 /** Store new results in db and hashmap **/
@@ -249,22 +270,23 @@ function storeResults(retList, search, url){
 
     for (var i = 0; i < retList.length; i++) {
         var cleanKw = CleanVal(retList[i]);
+        if (cleanKw.length){
+            // TODO check if I should add in bulk?
 
-        // TODO check if I should add in bulk?
-
-        // add to db
-        var transaction = db.transaction(["suggestions"], "readwrite");
-        transaction.onerror = errorHandler;
-        var objectStore = transaction.objectStore("suggestions");
-        addReq = objectStore.add({
-            keyword: cleanKw,
-            Length: cleanKw.length,
-            search: search,
-            ip: myIp,
-            url: this.url,
-            time: (new Date()).toUTCString()
-        });
-        addReq.onerror=errorHandler;
+            // add to db
+            var transaction = db.transaction(["suggestions"], "readwrite");
+            transaction.onerror = errorHandler;
+            var objectStore = transaction.objectStore("suggestions");
+            addReq = objectStore.add({
+                keyword: cleanKw,
+                Length: cleanKw.length,
+                search: search,
+                ip: myIp,
+                url: this.url,
+                time: (new Date()).toUTCString()
+            });
+            addReq.onerror=errorHandler;
+        }
 
     }
 }
@@ -304,6 +326,7 @@ function QueryKeyword(search) {
                 }
                 displayResults(retList,search);
                 permuteResultsToQueue(retList);
+                queryLock = false;
             }
             else {
                 // search not done, lets do the query
@@ -316,7 +339,7 @@ function QueryKeyword(search) {
                         client: "chrome"
                     },
                     success: function (res, statusText, jqXHR) {
-                        var search = res[0];
+                        // var search = res[0];
                         var retList = res[1];
                         var char, currentx;
 
@@ -334,23 +357,28 @@ function QueryKeyword(search) {
         reqObj.onerror=errorHandler;
 }
 
+/** Clean input, may not all be needed **/
 function CleanVal(input) {
     var val = input;
-    val = val.replace("\\u003cb\\u003e", "");
-    val = val.replace("\\u003c\\/b\\u003e", "");
-    val = val.replace("\\u003c\\/b\\u003e", "");
-    val = val.replace("\\u003cb\\u003e", "");
-    val = val.replace("\\u003c\\/b\\u003e", "");
-    val = val.replace("\\u003cb\\u003e", "");
-    val = val.replace("\\u003cb\\u003e", "");
-    val = val.replace("\\u003c\\/b\\u003e", "");
-    val = val.replace("\\u0026amp;", "&");
-    val = val.replace("\\u003cb\\u003e", "");
-    val = val.replace("\\u0026", "");
-    val = val.replace("\\u0026#39;", "'");
-    val = val.replace("#39;", "'");
-    val = val.replace("\\u003c\\/b\\u003e", "");
-    val = val.replace("\\u2013", "2013");
+
+    // legacy
+    // val = val.replace("<b>", "");
+    // val = val.replace("</b>", "");
+    // val = val.replace("</b>", "");
+    // val = val.replace("<b>", "");
+    // val = val.replace("</b>", "");
+    // val = val.replace("<b>", "");
+    // val = val.replace("<b>", "");
+    // val = val.replace("</b>", "");
+    // val = val.replace("&amp;", "&");
+    // val = val.replace("<b>", "");
+    // val = val.replace("&", "");
+    // val = val.replace("&#39;", "'");
+    // val = val.replace("#39;", "'");
+    // val = val.replace("</b>", "");
+    // val = val.replace("–", "2013");
+
+    // this removes navigation suggestions
     if (val.length > 4 && val.substring(0, 4) == "http") val = "";
     return val;
 }
@@ -359,9 +387,9 @@ function CleanVal(input) {
 function Filter(listToFilter) {
     var retList = listToFilter;
 
-    if (document.getElementById("filter-positive").value.length > 0) {
+    if ($("#filter-positive").val().length > 0) {
         var filteredList = [];
-        var filterContains = document.getElementById("filter-positive").value.split("\n");
+        var filterContains = $("#filter-positive").val().split("\n");
         for (var i = 0; i < retList.length; i++) {
             var currentKeyword = retList[i];
             var boolContainsKeyword = false;
@@ -382,9 +410,9 @@ function Filter(listToFilter) {
         retList = filteredList;
     }
 
-    if (document.getElementById("filter-negative").value.length > 0) {
+    if ($("#filter-negative").val().length > 0) {
         var filteredList = [];
-        var filterContains = document.getElementById("filter-negative").value.split("\n");
+        var filterContains = $("#filter-negative").val().split("\n");
         for (var i = 0; i < retList.length; i++) {
             var currentKeyword = retList[i];
             var boolCleanKeyword = true;
@@ -416,14 +444,20 @@ function FilterAndDisplay() {
         sb += outputKeywords[i];
         sb += '\n';
     }
-    document.getElementById("input").value = sb;
-    document.getElementById("numofkeywords").innerHTML = '' + outputKeywords.length + ' : ' + keywordsToQuery.length;
+    $("#input").val(sb);
+    $("#numofkeywords").html('Queue:' + outputKeywords.length + ', Results: ' + table.data().length);
 }
 
 /** read settings from webpage **/
-function readSettings(){
-
-}
+// function readSettings(){
+//     rateLimit = $('#service').val();
+//     filterNegative = $('#filter-negative').val();
+//     filterPositive = $('#filter-positive').val();
+//     rateLimit = $('#rate-limit').val();
+//     // input = $('#input').val();
+//     prefixes = $('#prefixes').val();
+//     suffixes = $('#suffixes').val();
+// }
 /** load settings from localStorage **/
 function loadSettings(){
     // TODO do table settings as well, e.g. column visibilitity
@@ -454,11 +488,7 @@ function reset(){
 }
 
 $(document).ready(function () {
-
     loadSettings();
-
-
-
     table = $('#outtable').DataTable({
         pageLength: 25,
         dom:
@@ -491,7 +521,7 @@ $(document).ready(function () {
             "targets": 5,
             "visible": false,
         }],
-        ordering: [[ 0, 'dec' ]],
+        ordering: [[ 0, 'asc' ]],
         colReorder: {},
         stateSave: true
     });
