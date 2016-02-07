@@ -23,6 +23,25 @@ $.getJSON('https://api.ipify.org?format=json', function (data) {
 //     myIp = data.host;
 // });
 
+
+
+
+// TODO Implement alternative services
+// Ref: https://github.com/estivo/Instantfox/blob/master/firefox/c1hrome/content/defaultPluginList.js
+// Ref: https://github.com/bnoordhuis/mozilla-central/tree/master/browser/locales/en-US/searchplugins
+services={
+        "google":
+        "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&q=${query}&ds=${site}&gl=${country}",
+        "yahoo":
+        "https://search.yahoo.com/sugg/ff?output=fxjson&appid=ffd&command=${query}",
+        "bing": "http://api.bing.com/osjson.aspx?query=${query}",
+        "ebay":
+        "http://autosug.ebay.com/autosug?kwd=${query}&_jgr=1&sId=0&_ch=0&callback=nil",
+        "amazon":
+        "http://completion.amazon.co.uk/search/complete?method=completion&q=${query}&search-alias=aps&mkt=4",
+        "twitter":
+        "https://twitter.com/i/search/typeahead.json?count=${max_results}&q=${query}&result_type=topics&src=SEARCH_BOX"
+    };
 function ebayParser(){}
     // s = req.lstrip('/**/nil/(').rstrip(')')
     // sugg_texts = json.loads(s)['res']['sug']
@@ -37,39 +56,14 @@ function twitterParser(){}
     //     'meta': j,
     //     'relevances': [t['rounded_score'] for t in j['topics']],
     // }
-
-
-// Ref: https://github.com/estivo/Instantfox/blob/master/firefox/c1hrome/content/defaultPluginList.js
-// Ref: https://github.com/bnoordhuis/mozilla-central/tree/master/browser/locales/en-US/searchplugins
-services={
-        "google":
-        "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&q=${query}&ds=${site}&gl=${country}",
-        "duckduckgo": "https://ac.duckduckgo.com/ac/?q=${query}&type=list",
-        "yahoo":
-        "https://search.yahoo.com/sugg/ff?output=fxjson&appid=ffd&command=${query}",
-        "bing": "http://api.bing.com/osjson.aspx?query=${query}",
-        "ebay":
-        "http://autosug.ebay.com/autosug?kwd=${query}&_jgr=1&sId=0&_ch=0&callback=nil",
-        "wikipedia":
-        "http://en.wikipedia.org/w/api.php?action=opensearch&search=${query}",
-        "amazon":
-        "http://completion.amazon.co.uk/search/complete?method=completion&q=${query}&search-alias=aps&mkt=4",
-        "startpage.com":
-        "https://startpage.com/cgi-bin/csuggest?output=json&pl=ff&lang=english&query=${query}",
-        "twitter":
-        "https://twitter.com/i/search/typeahead.json?count=${max_results}&q=${query}&result_type=topics&src=SEARCH_BOX"
-    };
 var RESPONSE_TEMPLATES = {
     "google": ['query', 'sugg_texts', 'sugg_titles', '_', 'meta'],
     "google_maps": ['query', 'sugg_texts', 'sugg_titles', '_', 'meta'],
-    "duckduckgo": ['query', 'sugg_texts'],
     "yahoo": ['query', 'sugg_texts'],
     "bing": ['query', 'sugg_texts'],
     "bing_search": ['query', 'sugg_texts'],
     "ebay": ebayParser,
-    "wikipedia": ['query', 'sugg_texts'],
     "amazon": ['query', 'sugg_texts'],
-    "startpage.com": ['query', 'sugg_texts'],
     "twitter": twitterParser
 };
 
@@ -426,30 +420,6 @@ function FilterAndDisplay() {
     document.getElementById("numofkeywords").innerHTML = '' + outputKeywords.length + ' : ' + keywordsToQuery.length;
 }
 
-
-/** TODO Try to fetch cpc and volume if users have kwkeg installed **/
-function get_kwkeg(){
-    var kws = table
-    .data()
-    .filter( function ( value, index ) {
-        return !value[3];
-    }).pluck(1);
-
-    var queries='kw%5B%5D='+kws.join('&kw%5B%5D=');
-
-    var url = '//keywordkeg.com/service/1/getKeywordData.php?source=keyshi&apiKey=ed8bd29691f4d6a9eb8e032d82de9714&'+queries;
-    $.ajax({
-        url:url,
-        crossDomain: true,
-        headers: {"Access-Control-Allow-Origin": "*"},
-        type: 'GET'
-    }).success(function(data){
-        for (var i = 0; i < data.length; i++) {
-            data[i];
-        }
-    });
-}
-
 /** read settings from webpage **/
 function readSettings(){
 
@@ -490,15 +460,10 @@ $(document).ready(function () {
 
 
     table = $('#outtable').DataTable({
-        //  "dom": '<"top"iflp<"clear">>rt<"bottom"ipB<"clear">>',
-        //   responsive: true,
         pageLength: 25,
-        //   bAutoWidth: false,
-        //   dom: 'lfrtipB',
         dom:
         "<'row'<'col-sm-5'B><'col-sm-7'<'pull-right'p>>>" +
         "<'row'<'col-sm-8'i><'col-sm-4'<'pull-right'f>>>" +
-        // "<'row'<'col-sm-4'><'col-sm-1'>>"+
             "<'row'<'col-sm-12'tr>>",
         buttons: ['copyHtml5', 'csvHtml5','colvis','pageLength'],
         "columnDefs": [
@@ -529,10 +494,5 @@ $(document).ready(function () {
         ordering: [[ 0, 'dec' ]],
         colReorder: {},
         stateSave: true
-        //   aaSorting: [],
-        // data: keywordsToDisplay
-    //     select: {
-    //       style: 'os'
-    //   }
     });
 });
