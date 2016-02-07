@@ -296,7 +296,7 @@ function QueryKeyword(search) {
         .getAll(search)
         .onsuccess = function(e) {
             // console.log(e.target.result);
-            if (e.target.result){
+            if (e.target.result.length){
                 // search was done previously so display results from db
                 var retList = [];
                 for (var i = 0; i < e.target.result.length; i++) {
