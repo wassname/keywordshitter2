@@ -159,8 +159,13 @@ function DoJob() {
             var currentKw = keywordsToQuery[keywordsToQueryIndex];
             if (currentKw[currentKw.length - 1] != '✓') {
                 QueryKeyword(currentKw);
+                keywordsToQueryIndex++;
+            } else {
+                // we didn't do a query immediatly go to next query
+                keywordsToQueryIndex++;
+                DoJob();
             }
-            keywordsToQueryIndex++;
+
         } else {
             if (numOfInitialKeywords != keywordsToQuery.length) {
                 doWork = false;
@@ -331,6 +336,9 @@ function QueryKeyword(search) {
                 markAsDone(search);
                 permuteResultsToQueue(retList);
                 queryLock = false;
+
+                // we didn't do a query immediatly go to next query
+                DoJob();
             }
             else {
                 // search not done, lets do the query
