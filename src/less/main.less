@@ -1,0 +1,58 @@
+
+@import "node_modules/bootstrap/less/bootstrap.less";
+
+
+// simplex theme
+@import "src/less/bootstrap/theme.less";
+@import "src/less/bootstrap/variables.less";
+
+// app overrides here
+
+
+
+// clean minimalist tables
+.table.dataTable {
+    min-height: 150px;
+}
+.table {
+  // Cells
+  > thead,
+  > tbody,
+  > tfoot {
+    > tr {
+      > th,
+      > td {
+        border-top: 0px solid @table-border-color;
+      }
+    }
+  }
+}
+.table-responsive {
+  @media screen and (max-width: @screen-xs-max) {
+    border: 0px solid @table-border-color;
+    }
+}
+
+// brand colors: shit brown and red. Yay for adult humour.
+@brand-danger:         #D9230F;
+@brand-primary:        #D9831F;
+@btn-primary-color:    white;
+.btn-primary {
+    font-weight: bold;
+}
+
+//** Background color for `<body>`.
+@body-bg:               white;
+//** Global text color on `<body>`.
+@text-color:            @gray-base;
+
+
+// change primary button color
+@btn-default-color:              black;
+@btn-default-bg:                 #fff;
+
+
+// override data tables
+.pagination {
+    margin: 0px;
+}

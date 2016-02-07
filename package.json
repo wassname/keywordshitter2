@@ -1,10 +1,12 @@
 {
   "name": "keywordshitter2",
   "version": "0.0.5",
-  "description": "Thinking about improving keyword shitter.",
-  "main": "index.js",
+  "description": "The second generation of keyword shitter. Bigger, better, and more pungent than other products.",
+  "main": "public/index.html",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha",
+    "build-css": "lessc ./src/less/main.less > public/css/style.css",
+    "build": "npm run build-css"
   },
   "author": "",
   "license": "MIT"

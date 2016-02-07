@@ -4,7 +4,7 @@ var numOfInitialKeywords = 0;
 var doWork = false;
 var keywordsToQuery = [];
 var keywordsToQueryIndex = 0;
-var queryflag = false;
+var queryLock = false;
 
 
 
@@ -104,15 +104,14 @@ dbReq.onupgradeneeded = function (event) {
             autoIncrement: true
         });
 
-        // Create an index to search suggestions by search.
+        // Create an index to search suggestions by
+        // he query that prompted the suggestion
         objectStore.createIndex("search", "search", {
             unique: false
         });
+        // and by suggestion
         objectStore.createIndex("keyword", "keyword", {
             unique: false
-        });
-        objectStore.createIndex("keyword", "keyword", {
-            unique: true
         });
 
     } else {
@@ -123,16 +122,17 @@ dbReq.onupgradeneeded = function (event) {
 window.setInterval(DoJob, 750);
 
 function StartJob() {
-    if (doWork == false) {
+    if (doWork === false) {
         keywordsToDisplay = [];
         hashMapResults = {};
         keywordsToQuery = [];
         keywordsToQueryIndex = 0;
 
-        hashMapResults[""] = 1;
-        hashMapResults[" "] = 1;
-        hashMapResults["  "] = 1;
+        // hashMapResults[""] = 1;
+        // hashMapResults[" "] = 1;
+        // hashMapResults["  "] = 1;
 
+        // update config
         prefixes = $('#prefixes').val().split(',');
         suffixes = $('#suffixes').val().split(',');
 
@@ -152,7 +152,7 @@ function StartJob() {
             //     hashMapResults[currentx] = 1;
             // }
         }
-        numOfInitialKeywords = keywordsToDisplay.length;
+        numOfInitialKeywords = keywordsToQuery.length;
         FilterAndDisplay();
 
         doWork = true;
@@ -171,7 +171,7 @@ function StartJob() {
 }
 
 function DoJob() {
-    if (doWork === true && queryflag === false) {
+    if (doWork === true && queryLock === false) {
         if (keywordsToQueryIndex < keywordsToQuery.length) {
             var currentKw = keywordsToQuery[keywordsToQueryIndex];
             if (currentKw[currentKw.length - 1] != '✓') {
@@ -179,7 +179,7 @@ function DoJob() {
             }
             keywordsToQueryIndex++;
         } else {
-            if (numOfInitialKeywords != keywordsToDisplay.length) {
+            if (numOfInitialKeywords != keywordsToQuery.length) {
                 doWork = false;
                 $('#startjob').val('Start Job').text('Start shitting').removeClass('btn-danger');
                 $('#input').show();
@@ -193,63 +193,132 @@ function DoJob() {
     }
 }
 
-/** Stem results and add to queue **/
-function stemResults(retList, search){
+/** Make permutations of results and add to queue **/
+function permuteResultsToQueue(retList, search){
 
-
-
-    // stem the result and add too
     // sort so the shortest is first in the queue
     retList.sort(function (a, b) {
       return a.length - b.length;
     });
+
     for (var i = 0; i < retList.length; i++) {
         var currents = CleanVal(retList[i]);
+        if (!hashMapResults[currents]){
+            hashMapResults[currents] = 1;
 
-        // add suggestion to queue
-        if (currents!==search)
-            keywordsToQuery[keywordsToQuery.length] = currents;
+            // add base suggestion to queue
+            if (currents!==search)
+                keywordsToQuery[keywordsToQuery.length] = currents;
 
-        // add permutations
-        for (var k = 0; k < prefixes.length; k++) {
-            var chr = prefixes[k];
-            var currentx = chr + ' ' + currents;
-            keywordsToQuery[keywordsToQuery.length] = currentx;
-            hashMapResults[currentx] = 1;
-        }
-        for (var j = 0; j < prefixes.length; j++) {
-            var chr = prefixes[j];
-            var currentx = currents + ' ' + chr;
-            keywordsToQuery[keywordsToQuery.length] = currentx;
-            hashMapResults[currentx] = 1;
+            // add prefix permutations
+            for (var k = 0; k < prefixes.length; k++) {
+                var chr = prefixes[k];
+                var currentx = chr + ' ' + currents;
+                keywordsToQuery[keywordsToQuery.length] = currentx;
+                hashMapResults[currentx] = 1;
+            }
+            // add suffix permutations
+            for (var j = 0; j < prefixes.length; j++) {
+                var chr = prefixes[j];
+                var currentx = currents + ' ' + chr;
+                keywordsToQuery[keywordsToQuery.length] = currentx;
+                hashMapResults[currentx] = 1;
+            }
         }
     }
 }
 
+/** Display results **/
+function displayResults(retList, search){
+    for (var i = 0; i < retList.length; i++) {
+        var  cleanKw = CleanVal(retList[i]);
+        // display
+        table.row.add([
+            table.rows()[0].length,
+            cleanKw,
+            cleanKw.length,
+            undefined,
+            undefined,
+            search]);
+    }
+    table.draw(false);
+
+    // FilterAndDisplay();
+    //
+    // var textarea = document.getElementById("input");
+    // textarea.scrollTop = textarea.scrollHeight;
+    //
+}
+
+/** Store new results in db and hashmap **/
+function storeResults(retList, search, url){
+
+    for (var i = 0; i < retList.length; i++) {
+        var cleanKw = CleanVal(retList[i]);
+
+        // TODO check if I should add in bulk?
+
+        // add to db
+        var transaction = db.transaction(["suggestions"], "readwrite");
+        transaction.onerror = errorHandler;
+        var objectStore = transaction.objectStore("suggestions");
+        addReq = objectStore.add({
+            keyword: cleanKw,
+            Length: cleanKw.length,
+            search: search,
+            ip: myIp,
+            url: this.url,
+            time: (new Date()).toUTCString()
+        });
+        addReq.onerror=errorHandler;
+
+    }
+}
+
+/** mark a search as done in the queue **/
+function markAsDone(search){
+    // mark as done in queue
+    var found=false;
+    for (var l = 0; l < keywordsToQuery.length; l++) {
+        if (keywordsToQuery[l]==search){
+            keywordsToQuery[l]+=' ✓';
+            found=true;
+            break;
+        }
+    }
+    if (!found){console.error('Did not find ', search, 'in queue');}
+}
+
 /** Get search suggestions for a keyword **/
-function QueryKeyword(keyword) {
-    var querykeyword = keyword;
+function QueryKeyword(search) {
+    var querykeyword = search;
     var queryresult = '';
-    queryflag = true; // wait for this worker
+    queryLock = true;
 
     // first check in db
     var reqObj = db.transaction(["suggestions"],"readonly").
         objectStore("suggestions")
         .index("search")
-        .getAll(keyword)
+        .getAll(search)
         .onsuccess = function(e) {
-            console.log(e.target.result);
-            if ('already exists', e.target.results){
-                // TODO add
+            // console.log(e.target.result);
+            if (e.target.result){
+                // search was done previously so display results from db
+                var retList = [];
+                for (var i = 0; i < e.target.result.length; i++) {
+                    retList.push(e.target.result[i].keyword);
+                }
+                displayResults(retList,search);
+                permuteResultsToQueue(retList);
             }
             else {
-
+                // search not done, lets do the query
                 $.ajax({
                     url: "http://suggestqueries.google.com/complete/search",
                     jsonp: "jsonp",
                     dataType: "jsonp",
                     data: {
-                        q: querykeyword,
+                        q: search,
                         client: "chrome"
                     },
                     success: function (res, statusText, jqXHR) {
@@ -257,66 +326,12 @@ function QueryKeyword(keyword) {
                         var retList = res[1];
                         var char, currentx;
 
+                        storeResults(retList, search, this.url);
+                        displayResults(retList, search);
+                        permuteResultsToQueue(retList);
+                        markAsDone(search);
 
-
-                        // store results
-                        for (var i = 0; i < retList.length; i++) {
-                            var currents = CleanVal(retList[i]);
-                            if (hashMapResults[currents] != 1) {
-                                hashMapResults[currents] = 1;
-                                var cleanKw = CleanVal(retList[i]);
-
-
-                                // display
-                                table.row.add([
-                                    table.rows()[0].length,
-                                    cleanKw,
-                                    cleanKw.length,
-                                    undefined,
-                                    undefined,
-                                    search])
-                                    .draw(false);
-
-                                // add to db
-                                var transaction = db.transaction(["suggestions"], "readwrite");
-                                transaction.onerror = errorHandler;
-                                var objectStore = transaction.objectStore("suggestions");
-                                addReq = objectStore.add({
-                                    Keyword: cleanKw,
-                                    Length: cleanKw.length,
-                                    search: search,
-                                    ip: myIp,
-                                    url: this.url,
-                                    time: (new Date()).toUTCString()
-                                });
-                                addReq.onerror=errorHandler;
-                            }
-                        }
-
-                        stemResults(retList);
-
-                        // now remove from the queue
-                        // FIXME oh wait but that mean it progress up th queue by 2 instead of one
-                        var found=false;
-                        for (var l = 0; l < keywordsToQuery.length; l++) {
-                            if (keywordsToQuery[l]==search){
-                                // keywordsToQuery.splice(l,1);
-                                keywordsToQuery[l]+=' ✓';
-                                found=true;
-                                break;
-                            }
-                        }
-                        if (!found){console.error('Did not find ', search, 'in queue');}
-
-
-                        // table.draw();
-                        // FilterAndDisplay();
-                        //
-                        // var textarea = document.getElementById("input");
-                        // textarea.scrollTop = textarea.scrollHeight;
-                        //
-
-                        queryflag = false;
+                        queryLock = false;
 
                     }
                 });
@@ -346,6 +361,7 @@ function CleanVal(input) {
     return val;
 }
 
+/** TODO get this working **/
 function Filter(listToFilter) {
     var retList = listToFilter;
 
@@ -407,11 +423,11 @@ function FilterAndDisplay() {
         sb += '\n';
     }
     document.getElementById("input").value = sb;
-    document.getElementById("numofkeywords").innerHTML = '' + outputKeywords.length + ' : ' + keywordsToDisplay.length;
+    document.getElementById("numofkeywords").innerHTML = '' + outputKeywords.length + ' : ' + keywordsToQuery.length;
 }
 
 
-
+/** TODO Try to fetch cpc and volume if users have kwkeg installed **/
 function get_kwkeg(){
     var kws = table
     .data()
@@ -432,18 +448,15 @@ function get_kwkeg(){
             data[i];
         }
     });
-
-
 }
 
-// function FilterIfNotWorking() {
-//     if (doWork == false) {
-//         FilterAndDisplay();
-//     }
-// }
+/** read settings from webpage **/
+function readSettings(){
 
-//set options from localstorage and watch for changes
+}
+/** load settings from localStorage **/
 function loadSettings(){
+    // TODO do table settings as well, e.g. column visibilitity
     if (localStorage.service) $("#service").val( localStorage.service );
     if (localStorage.filterNegative) $("#filter-negative").val( localStorage.filterNegative );
     if (localStorage.filterPositive) $("#filter-positive").val( localStorage.filterPositive );
@@ -453,6 +466,7 @@ function loadSettings(){
     if (localStorage.suffixes) $("#suffixes").val( localStorage.suffixes );
 
 }
+/** save settings to localStorage. **/
 function saveSettings(){
     localStorage.service = $('#service').val();
     localStorage.filterNegative = $('#filter-negative').val();
@@ -461,6 +475,12 @@ function saveSettings(){
     localStorage.input = $('#input').val();
     localStorage.prefixes = $('#prefixes').val();
     localStorage.suffixes = $('#suffixes').val();
+}
+function reset(){
+    table.clear();
+    table.draw();
+    $('#input').val('');
+    saveSettings();
 }
 
 $(document).ready(function () {
@@ -475,28 +495,44 @@ $(document).ready(function () {
         pageLength: 25,
         //   bAutoWidth: false,
         //   dom: 'lfrtipB',
-        dom: "<'row'<'col-sm-3'B><'col-sm-6'i><'col-sm-3'f>>" +
-            "<'row'<'col-sm-12'tr>>" +
-            "<'row'<'col-sm-4'B><'col-sm-5'p><'col-sm-3'l>>",
-        buttons: ['copyHtml5', 'csvHtml5'],
-        "columnDefs": [{
-            "name": "keyword",
-            "targets": 0
+        dom:
+        "<'row'<'col-sm-5'B><'col-sm-7'<'pull-right'p>>>" +
+        "<'row'<'col-sm-8'i><'col-sm-4'<'pull-right'f>>>" +
+        // "<'row'<'col-sm-4'><'col-sm-1'>>"+
+            "<'row'<'col-sm-12'tr>>",
+        buttons: ['copyHtml5', 'csvHtml5','colvis','pageLength'],
+        "columnDefs": [
+        {
+            "name": "id",
+            "targets": 0,
+            "visible": false,
         }, {
-            "name": "length",
+            "name": "keyword",
             "targets": 1
         }, {
+            "name": "length",
+            "targets": 2,
+            "visible": false,
+        }, {
             "name": "volume",
-            "targets": 2
+            "targets": 3,
+            "visible": false,
         }, {
             "name": "cpc",
-            "targets": 3
+            "targets": 4,
+            "visible": false,
         }, {
             "name": "search",
-            "targets": 4
+            "targets": 5,
+            "visible": false,
         }],
+        ordering: [[ 0, 'dec' ]],
+        colReorder: {},
+        stateSave: true
         //   aaSorting: [],
         // data: keywordsToDisplay
+    //     select: {
+    //       style: 'os'
+    //   }
     });
-    table.order([ 0, 'dec' ]);
 });

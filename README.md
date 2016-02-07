@@ -17,7 +17,13 @@ change how it stems searches  - done
 cache to indexdb- done
 hide advanced options- done
 remember how many done on this ip- done
+save table state - done
+save setting - done
 
+brown theme - done
 
 add bing etc
-keywordkeg
+keywordkeg - hard
+
+
+test:
