@@ -1,29 +1,37 @@
+# Keywordshitter2 - The Bulk Keyword Tool
 
-Thinking about improving keyword shitter.
+An update of the beloved keyword generation tool [keywordshitter](keywordshitter.com). [Demo here](http://wassname.github.io/keywordshitter2/).
 
-E.g. like http://answerthepublic.com/seeds/95429
+#New features:
 
+- View the results as a sortable table
+- Control how the keywords are branched
+- Cache to a local database
+- Settings
 
-Ways to visualise:
-- http://bl.ocks.org/tmcw/4063830
-- http://jsfiddle.net/4yttq/1/
+## Old-but-still-good features:
 
+- Shit theme
+- Simple
+- Humor suitable for a todler
 
-# TODO:
+## Coming soon (TM):
 
-datatables for visualisation - done
-with length column  - done
-change how it stems searches  - done
-cache to indexdb- done
-hide advanced options- done
-remember how many done on this ip- done
-save table state - done
-save setting - done
-
-brown theme - done
-
-add bing etc
-keywordkeg - hard
+- Multiple services
+- Updated toilet logo
+- Less bugs
+- CPC and Volume integration from KeywordKeg
 
 
-test:
+# License
+
+MIT Licence (unless blakamia says otherwise)
+
+# Contributing
+
+Yes please.
+
+# Credits
+
+- [blakamia for being the reason we can't have nice things, and for creating the original keywordshitter](http://www.blackhatworld.com/blackhat-seo/black-hat-seo-tools/538215-free-simple-longtail-keyword-tool.html)
+- wassname - for also being terrible.
