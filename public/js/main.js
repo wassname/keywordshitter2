@@ -521,7 +521,7 @@ $(document).ready(function () {
             "targets": 5,
             "visible": false,
         }],
-        ordering: [[ 0, 'asc' ]],
+        order: [[ 0, 'desc' ]],
         colReorder: {},
         stateSave: true
     });
