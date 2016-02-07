@@ -36,7 +36,9 @@
                     <label for="input" >Starting searches:</label>
                     <textarea id="input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" rows="6" title="queue" class="form-control"  placeholder="I accidentally
 on purpose">I accidentally
-on purpose</textarea>
+on purpose
+dismantled my
+lying internet</textarea>
                 </div>
                 <a class="btn btn-info" id="startjob" onclick="StartJob();" type="button" value="Shit Keywords!">Shit Keywords!</a>
 
@@ -50,12 +52,12 @@ on purpose</textarea>
             <!-- </div> -->
 
             <!-- <div class="col-sm-2"> -->
-                <div id="advanced" class="collapse">
+                <form id="advanced" class="collapse">
 
 
                     <div class="form-group">
                       <label for="sel1">Service:</label>
-                      <select class="form-control" id="select-service" disabled>
+                      <select class="form-control" name="service" id="service" disabled>
                         <option>google</option>
                         <option>twitter</option>
                         <option>yahoo</option>
@@ -71,7 +73,7 @@ on purpose</textarea>
 
                     <div class="form-group">
                       <label for="rate-limit">Prefixes</label>
-                      <textarea type="text" title="These values are added before words to prompt the search suggestions" class="form-control" id="prefixes"  >a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,y,x,y,z,how,which,why,where,who,when,are,what</textarea>
+                      <textarea type="text" title="These values are added before words to prompt the search suggestions" class="form-control" name="prefixes" id="prefixes"  >a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,y,x,y,z,how,which,why,where,who,when,are,what</textarea>
                     </div>
                     <div class="form-group">
                       <label for="rate-limit">Suffixes:</label>
@@ -80,19 +82,19 @@ on purpose</textarea>
 
                     <div class="form-group">
                         <label for="filter-positive" >Positive filter:</label>
-                        <textarea disabled id="filter-positive" class="form-control" rows="3" onkeyup="FilterIfNotWorking()"
+                        <textarea disabled id="filter-positive" name="filter-positive" class="form-control" rows="3" onkeyup="FilterIfNotWorking()"
                             placeholder="Positive Filter"></textarea>
                     </div>
                     <div class="form-group">
                         <label for="filter-negative">Negative filter:</label>
-                        <textarea disabled id="filter-negative" class="form-control" rows="3" onkeyup="FilterIfNotWorking()" placeholder="Negative Filter"></textarea>
+                        <textarea disabled id="filter-negative" name="filter-negative" class="form-control" rows="3" onkeyup="FilterIfNotWorking()" placeholder="Negative Filter"></textarea>
                     </div>
                     <div class="form-group">
                       <label for="rate-limit">Rate limit (for experts):</label>
-                      <input type="text" disabled title="Value between searches in milliseconds" class="form-control" id="rate-limit" value="750" title="Only change if you know what you are doing. This could get your ip banned, or place a burden on the suggest servers." >
+                      <input type="text"  title="Value between searches in milliseconds" class="form-control" id="rate-limit" value="750" name="rate-limit" title="Only change if you know what you are doing. This could get your ip banned, or place a burden on the suggest servers." disabled>
                     </div>
 
-                </div>
+                </form>
 
                 <div id="about" class="collapse">
                     <p>Keyword shitter 2 is inspired by the amazing Keyword shitter 1!</p>
