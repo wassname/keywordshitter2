@@ -55,8 +55,8 @@ lying internet</textarea>
 
 
                     <div class="form-group">
-                      <label for="sel1">Service:</label>
-                      <select class="form-control" name="service" id="service" disabled>
+                      <label for="service">Service:</label>
+                      <select class="form-control" name="service" id="service" >
                         <option>google</option>
                         <option>twitter</option>
                         <option>yahoo</option>
@@ -64,19 +64,29 @@ lying internet</textarea>
                         <option>ebay</option>
                         <option>amazon</option>
                         <option>google images</option>
+                        <option>youtube</option>
+                        <option>google videos</option>
                         <option>google books</option>
                         <option>google news</option>
                         <option>google shopping</option>
                       </select>
                     </div>
+                    <div class="form-group">
+                      <label for="country">Country code (google):</label>
+                      <input type="text" disabled title="Country code. Two letters. Only works for google for now" class="form-control" id="country" value="US" >
+                    </div>
+                    <div class="form-group">
+                      <label for="lang">Lang code (google):</label>
+                      <input type="text" disabled title="Lang code. Two letters. Only works for google for now" class="form-control" id="lang" value="en" >
+                    </div>
 
                     <div class="form-group">
-                      <label for="rate-limit">Prefixes</label>
+                      <label for="prefixes">Prefixes</label>
                       <textarea type="text" title="These values are added before words to prompt the search suggestions" class="form-control" name="prefixes" id="prefixes"  >a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,y,x,y,z,how,which,why,where,who,when,are,what</textarea>
                     </div>
                     <div class="form-group">
-                      <label for="rate-limit">Suffixes:</label>
-                      <textarea type="text" rows="2" title="These values are added after words to prompt the search suggestions" class="form-control" id="suffixes">like,for,without,with,verses,to,near,except,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,y,x,y,z</textarea>
+                      <label for="suffixes">Suffixes:</label>
+                      <textarea type="text" rows="2" title="These values are added after words to prompt the search suggestions" class="form-control" id="suffixes">like,for,without,with,versus,vs,to,near,except,has,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,y,x,y,z</textarea>
                     </div>
 
                     <div class="form-group">
@@ -125,11 +135,11 @@ lying internet</textarea>
                     <thead>
                         <tr>
                             <th>id</th>
-                            <th>Keyword</th>
+                            <th title="A suggested search">Keyword</th>
                             <th title="Keyword length">Length</th>
                             <th title="Searches per month">Volume</th>
                             <th title="Cost per click ($US)">CPC</th>
-                            <th title="Search">Search</th>
+                            <th title="Search that prompted the keyword suggestion">Search</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -143,11 +153,13 @@ lying internet</textarea>
 
     </div>
 
-    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/datatables/1.10.10/js/jquery.js" crossorigin="anonymous"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/datatables/1.10.10/js/jquery.js" crossorigin="anonymous"></script>
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 
 
-    <script type="text/javascript" src="//cdn.datatables.net/s/bs/jszip-2.5.0,dt-1.10.10,b-1.1.0,b-colvis-1.1.0,b-html5-1.1.0,b-print-1.1.0,cr-1.3.0,fh-3.1.0,kt-2.1.0,r-2.0.0,se-1.1.0/datatables.min.js" crossorigin="anonymous"></script>
+    <script src="//cdn.datatables.net/s/bs/jszip-2.5.0,dt-1.10.10,b-1.1.0,b-colvis-1.1.0,b-html5-1.1.0,b-print-1.1.0,cr-1.3.0,fh-3.1.0,kt-2.1.0,r-2.0.0,se-1.1.0/datatables.min.js" crossorigin="anonymous"></script>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.2.0/lodash.min.js"></script>
 
     <script type="text/javascript" src="js/main.js"></script>
 

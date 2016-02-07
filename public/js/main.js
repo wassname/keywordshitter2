@@ -29,19 +29,46 @@ $.getJSON('https://api.ipify.org?format=json', function (data) {
 // TODO Implement alternative services
 // Ref: https://github.com/estivo/Instantfox/blob/master/firefox/c1hrome/content/defaultPluginList.js
 // Ref: https://github.com/bnoordhuis/mozilla-central/tree/master/browser/locales/en-US/searchplugins
-services={
-        "google":
-        "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&q=${query}&ds=${site}&gl=${country}",
-        "yahoo":
-        "https://search.yahoo.com/sugg/ff?output=fxjson&appid=ffd&command=${query}",
-        "bing": "http://api.bing.com/osjson.aspx?query=${query}",
-        "ebay":
-        "http://autosug.ebay.com/autosug?kwd=${query}&_jgr=1&sId=0&_ch=0&callback=nil",
-        "amazon":
-        "http://completion.amazon.co.uk/search/complete?method=completion&q=${query}&search-alias=aps&mkt=4",
-        "twitter":
-        "https://twitter.com/i/search/typeahead.json?count=${max_results}&q=${query}&result_type=topics&src=SEARCH_BOX"
+
+/**
+ * Get the service url based on options set in the dom.
+ * @return {String} A jsonp url for search suggestions with query missing from the end.
+ */
+function getUrl(){
+    services={
+            "google":
+            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&gl=${country}&callback=?&q=",
+            "google news":
+            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=n&gl=${country}&callback=?&q=",
+            "google shopping":
+            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=sh&gl=${country}&callback=?&q=",
+            "google books":
+            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=bo&gl=${country}&callback=?&q=",
+            "youtube":
+            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=yt&gl=${country}&callback=?&q=",
+            "google videos":
+            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=v&gl=${country}&callback=?&q=",
+            "google images":
+            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=i&gl=${country}&callback=?&q=",
+            "yahoo":
+            "https://search.yahoo.com/sugg/ff?output=jsonp&appid=ffd&callback=?&command=",
+            "bing": "http://api.bing.com/osjson.aspx?JsonType=callback&JsonCallback=?&query=",
+            "ebay":
+            "http://autosug.ebay.com/autosug?_jgr=1&sId=0&_ch=0&callback=?&kwd=",
+            "amazon":
+            "http://completion.amazon.co.uk/search/complete?method=completion&search-alias=aps&mkt=4&callback=?&q=",
+            "twitter":
+            "https://twitter.com/i/search/typeahead.json?count=30&result_type=topics&src=SEARCH_BOX&callback=?&q="
+        };
+    options={
+        country: $('#country').val(),
+        service: $('#service').val(),
+        lang: $('#lang').val(),
     };
+    return _.template(services[options.service])(options);
+}
+
+
 function ebayParser(){}
     // s = req.lstrip('/**/nil/(').rstrip(')')
     // sugg_texts = json.loads(s)['res']['sug']
@@ -56,15 +83,22 @@ function twitterParser(){}
     //     'meta': j,
     //     'relevances': [t['rounded_score'] for t in j['topics']],
     // }
+
+/** Parse response per service **/
+function parseServiceResponse(res){
+    var service = $('#service').val();
+    var parser = RESPONSE_TEMPLATES[service] || RESPONSE_TEMPLATES["default"];
+    return parser(res);
+}
 var RESPONSE_TEMPLATES = {
-    "google": ['query', 'sugg_texts', 'sugg_titles', '_', 'meta'],
-    "google_maps": ['query', 'sugg_texts', 'sugg_titles', '_', 'meta'],
-    "yahoo": ['query', 'sugg_texts'],
-    "bing": ['query', 'sugg_texts'],
-    "bing_search": ['query', 'sugg_texts'],
-    "ebay": ebayParser,
-    "amazon": ['query', 'sugg_texts'],
-    "twitter": twitterParser
+    "default": function(res){return res[1];},
+    "google": function(res){return res[1];},
+    "youtube": function(res){return res[1];},
+    "yahoo": function(res){return _.map(res.gossip.results,'key');},
+    "bing": function(res){return res[1];},
+    "ebay": function(res){return res.res.sug;},
+    "amazon": function(res){return res[1];},
+    "twitter": function(res){return Array.concat(res.users,_.map(res.topics,'topic'),res.hashtags,res.oneclick);}
 };
 
 // setup a db. Ref: https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB
@@ -130,12 +164,12 @@ function StartJob() {
         suffixes = $('#suffixes').val().split(',');
 
         var ks = $('#input').val().split("\n");
-        var i = 0;
-        for (i = 0; i < ks.length; i++) {
-            keywordsToQuery[keywordsToQuery.length] = ks[i];
-
+        for (var i = 0; i < ks.length; i++) {
+            if (ks[i].trim().length)
+                keywordsToQuery[keywordsToQuery.length] = ks[i];
         }
         numOfInitialKeywords = keywordsToQuery.length;
+        if (!numOfInitialKeywords) permuteResultsToQueue([' ']);
         FilterAndDisplay();
 
         doWork = true;
@@ -342,17 +376,18 @@ function QueryKeyword(search) {
             }
             else {
                 // search not done, lets do the query
+                url = getUrl()+search;
                 $.ajax({
-                    url: "http://suggestqueries.google.com/complete/search",
+                    url: url,
                     jsonp: "jsonp",
                     dataType: "jsonp",
-                    data: {
-                        q: search,
-                        client: "chrome"
-                    },
+                    // data: {
+                    //     q: search,
+                    //     client: "chrome"
+                    // },
                     success: function (res, statusText, jqXHR) {
-                        // var search = res[0];
-                        var retList = res[1];
+
+                        var retList = parseServiceResponse(res);
                         var char, currentx;
 
                         storeResults(retList, search, this.url);
@@ -477,6 +512,8 @@ function FilterAndDisplay() {
 function loadSettings(){
     // TODO do table settings as well, e.g. column visibilitity
     if (localStorage.service) $("#service").val( localStorage.service );
+    if (localStorage.country) $('#country').val(localStorage.country);
+    if (localStorage.lang) $('#lang').val(localStorage.lang);
     if (localStorage.filterNegative) $("#filter-negative").val( localStorage.filterNegative );
     if (localStorage.filterPositive) $("#filter-positive").val( localStorage.filterPositive );
     if (localStorage.rateLimit) $("#rate-limit").val( localStorage.rateLimit );
@@ -488,6 +525,8 @@ function loadSettings(){
 /** save settings to localStorage. **/
 function saveSettings(){
     localStorage.service = $('#service').val();
+    localStorage.country = $('#country').val();
+    localStorage.lang = $('#lang').val();
     localStorage.filterNegative = $('#filter-negative').val();
     localStorage.filterPositive = $('#filter-positive').val();
     localStorage.rateLimit = $('#rate-limit').val();
