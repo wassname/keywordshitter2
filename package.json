@@ -9,10 +9,11 @@
     "build": "npm run build-css",
     "start": "node server.js"
   },
-  "author": "",
+  "author": "blackmia,wassname",
   "license": "MIT",
   "devDependencies": {
     "cors": "^2.7.1",
-    "express": "^4.13.4"
+    "express": "^4.13.4",
+    "lessc": "latest"
   }
 }

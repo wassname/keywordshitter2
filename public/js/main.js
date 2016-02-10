@@ -1,35 +1,31 @@
-var keywordsToDisplay = [];
+// quick way to check if we already have keyword
 var hashMapResults = {};
+
+// keeping track of queue
 var numOfInitialKeywords = 0;
-var doWork = false;
 var keywordsToQuery = [];
 var keywordsToQueryIndex = 0;
+
+// flags
+var doWork = false;
 var queryLock = false;
 
-
-
+var db
 var table;
 var prefixes;
 var suffixes;
-var objectStore;
-
 var myIp;
 
-
-
-
-
-
-
-// TODO Implement alternative services
-// Ref: https://github.com/estivo/Instantfox/blob/master/firefox/c1hrome/content/defaultPluginList.js
-// Ref: https://github.com/bnoordhuis/mozilla-central/tree/master/browser/locales/en-US/searchplugins
 
 /**
  * Get the service url based on options set in the dom.
  * @return {String} A jsonp url for search suggestions with query missing from the end.
  */
 function getUrl(){
+    // Ref: https://github.com/estivo/Instantfox/blob/master/firefox/c1hrome/content/defaultPluginList.js
+    // Ref: https://github.com/bnoordhuis/mozilla-central/tree/master/browser/locales/en-US/searchplugins
+    // Ref: https://developers.google.com/custom-search/json-api/v1/reference/cse/list
+    // https://developers.google.com/custom-search/docs/ref_languages
     services={
             "google":
             "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&gl=${country}&callback=?&q=",
@@ -63,67 +59,71 @@ function getUrl(){
     return _.template(services[options.service])(options);
 }
 
-var RESPONSE_TEMPLATES = {
-    "default": function(res){return res[1];},
-    "google": function(res){return res[1];},
-    "youtube": function(res){return res[1];},
-    "yahoo": function(res){return _.map(res.gossip.results,'key');},
-    "bing": function(res){return res[1];},
-    "ebay": function(res){
-        return res.res? res.res.sug: undefined;
-    },
-    "amazon": function(res){return res[1];},
-    "twitter": function(res){return _.concat(res.users,_.map(res.topics,'topic'),res.hashtags,res.oneclick);}
-};
+
 /** Parse response per service **/
 function parseServiceResponse(res){
+    // Each take a json response tand return a keyword array
+    RESPONSE_TEMPLATES = {
+        "default": function(res){return res[1];}, // opensearch default
+        "google": function(res){return res[1];},
+        "youtube": function(res){return res[1];},
+        "yahoo": function(res){return _.map(res.gossip.results,'key');},
+        "bing": function(res){return res[1];},
+        "ebay": function(res){
+            return res.res? res.res.sug: undefined;
+        },
+        "amazon": function(res){return res[1];},
+        "twitter": function(res){return _.concat(res.users,_.map(res.topics,'topic'),res.hashtags,res.oneclick);}
+    };
     var service = $('#service').val();
     var parser = RESPONSE_TEMPLATES[service] || RESPONSE_TEMPLATES["default"];
     return parser(res);
 }
 
-
-// setup a db. Ref: https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB
-
-/** Basic error handler **/
-function errorHandler(){
-    console.error(this,arguments);
-    return this; // for chaining
-}
-var db;
-var dbReq = window.indexedDB.open("KeywordShitter2", 3);
-/** Error handler for all child transactions as events bubbe up **/
-dbReq.onerror = function (event) {
-    console.error('dbReq', event);
-};
-dbReq.onsuccess = function (event) {
-    db = event.target.result;
-    db.onerror = function (event) {
-        // Generic error handler requests
-        console.error("Database error: " + event.currentTarget.error.errorCode, event.currentTarget.error.message, event);
+function setUpDb(){
+    // setup a db. Ref: https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB
+    var dbReq = window.indexedDB.open("KeywordShitter2", 3);
+    /** Error handler for all child transactions as events bubbe up **/
+    dbReq.onerror = function (event) {
+        return console.error('Error opening indexedDB database KeywordShitter2', event);
     };
-};
-dbReq.onupgradeneeded = function (event) {
-    console.log("running onupgradeneeded");
-    db = event.target.result;
+    dbReq.onsuccess = function (event) {
+        db = event.target.result;
+        db.onerror = function (event) {
+            // Generic error handler requests
+            if (event && event.target && event.target.error)
+                console.error("Database error",event.target.error.errorCode, event.target.error.message, event);
+            else
+                console.error("Database error",arguments);
+            return this;
+        };
+        return db;
+    };
+    dbReq.onupgradeneeded = function (event) {
+        console.log("running onupgradeneeded");
+        db = event.target.result;
 
-    if (!db.objectStoreNames.contains("suggestions")) {
-        var objectStore = db.createObjectStore("suggestions", {
-            autoIncrement: true, keyPath: 'id'
-        });
-        // Create an index to search suggestions by
-        // he query that prompted the suggestion
-        if (!objectStore.indexNames.contains('search'))
-            objectStore.createIndex("search", "search", {unique: false});
+        if (!db.objectStoreNames.contains("suggestions")) {
+            var objectStore = db.createObjectStore("suggestions", {
+                autoIncrement: true, keyPath: 'id'
+            });
+            // Create an index to search suggestions by
+            // he query that prompted the suggestion
+            if (!objectStore.indexNames.contains('search'))
+                objectStore.createIndex("search", "search", {unique: false});
 
-        // and by suggestion/keyword
-        if (!objectStore.indexNames.contains('keyword'))
-            objectStore.createIndex("keyword", "keyword", {unique: false});
+            // and by suggestion/keyword
+            if (!objectStore.indexNames.contains('keyword'))
+                objectStore.createIndex("keyword", "keyword", {unique: false});
 
-    }
-};
+        }
 
-window.setInterval(DoJob, 750);
+        return db;
+    };
+    return db;
+}
+
+
 
 function StartJob() {
     if (doWork === false) {
@@ -226,10 +226,26 @@ function permuteResultsToQueue(retList, search){
     }
 }
 
+/** xport db as json **/
+function exportDB(){
+    var reqObj = db.transaction(["suggestions"],"readonly")
+        .objectStore("suggestions")
+        .getAll();
+        reqObj.onsuccess = function(e) {
+            if (e.target.result.length){
+                var jsonData = JSON.stringify(e.target.result);
+                var blob = new Blob([jsonData], {type: "octet/stream"});
+                saveAs(blob,'keywordshitter_'+(new Date())+'.json');
+            }
+            return;
+        };
+        return reqObj;
+}
+
 /** Display data from db upon pressing load button **/
 function loadFromDB(){
-    var reqObj = db.transaction(["suggestions"],"readonly").
-        objectStore("suggestions")
+    var reqObj = db.transaction(["suggestions"],"readonly")
+        .objectStore("suggestions")
         .getAll()
         .onsuccess = function(e) {
             if (e.target.result.length){
@@ -246,17 +262,19 @@ function loadFromDB(){
                         d.search,
                         d.domain
                     ];
+
                     // also remove undefined so datatables doesn't bring up alerts
                     da = da.map(function(v){return v===undefined ? null: v;});
+
                     // parse nums
                     // da = da.map(v => /^[\d+\.]+$/.test(v) ? Number(v): v);
+                    //
                     data.push(da);
                 }
                 table.rows.add(data);
+                return table.draw(false);
             }
-            return table.draw(false);
         };
-        reqObj.onerror=errorHandler;
         return;
 }
 
@@ -292,6 +310,9 @@ function displayResults(retList, search, dontDisplay, url,data){
     if (!dontDisplay) table.draw(false);
 }
 
+/** Takes url string and returns domain e.g. www.google.com or google.com
+  * and some extra params to identify is
+  **/
 function extractDomain(url) {
     if (url===undefined) return null;
     var domain;
@@ -305,6 +326,18 @@ function extractDomain(url) {
 
     //find & remove port number
     domain = domain.split(':')[0];
+
+    // custom, add ds= param to distinguish googles diff searchs
+    var ds = url.match('ds=(..?)&')[1];
+    if (ds && ds.length) domain+='&ds='+ds;
+
+    // also country
+    var gl = url.match('gl=(..?)&')[1];
+    if (gl && gl.length) domain+='&gl='+gl;
+
+    // also country
+    var hl = url.match('hl=(..?)&')[1];
+    if (hl && hl.length) domain+='&hl='+gl;
 
     return domain;
 }
@@ -405,9 +438,8 @@ function QueryKeyword(search) {
                             displayResults(retList, search, undefined, this.url);
                             permuteResultsToQueue(retList);
                         } else {
-                            console.warn('No reslts for query "',search,'" ', this.url);
+                            console.warn('No results for query "',search,'" ');
                         }
-
                         markAsDone(search);
                         queryLock = false;
 
@@ -418,7 +450,6 @@ function QueryKeyword(search) {
                 });
             }
         };
-        reqObj.onerror=errorHandler;
 }
 
 /** Clean input, may not all be needed **/
@@ -500,10 +531,11 @@ function Filter(listToFilter) {
     return retList;
 }
 
+/** display the queue, and update description of it **/
 function FilterAndDisplay() {
     var i = 0;
     var sb = '';
-    var outputKeywords = Filter(keywordsToQuery);
+    var outputKeywords = keywordsToQuery;
     for (i = 0; i < outputKeywords.length; i++) {
         sb += outputKeywords[i];
         sb += '\n';
@@ -522,6 +554,7 @@ function FilterAndDisplay() {
 //     prefixes = $('#prefixes').val();
 //     suffixes = $('#suffixes').val();
 // }
+
 /** load settings from localStorage **/
 function loadSettings(){
     // TODO do table settings as well, e.g. column visibilitity
@@ -548,6 +581,8 @@ function saveSettings(){
     localStorage.prefixes = $('#prefixes').val();
     localStorage.suffixes = $('#suffixes').val();
 }
+
+/** reset inputs and results, but not settings **/
 function reset(){
     table.clear();
     table.draw();
@@ -555,7 +590,9 @@ function reset(){
     saveSettings();
 }
 
+setUpDb();
 $(document).ready(function () {
+    window.setInterval(DoJob, 750);
     //
     // $('#startjob').on('click',StartJob);
     // $('#reset').on('click',reset);
@@ -574,22 +611,22 @@ $(document).ready(function () {
             'csvHtml5',
             'colvis',
             'pageLength',
-            {
-                extend: 'csvHtml5',
-                fieldBoundary: "",
-                text: 'Copy keywords',
-                // 'customize': function(data,options){return data.split('\n').join(',');},
-                header: false,
-                exportOptions: {
-                    stripNewlines: true,
-                    stripHtml: true,
-                    decodeEntities: true,
-                    columns: 1,
-                    // format:{
-                    //     body: function(html,i){console.log(html);return html}
-                    // }
-                }
-            },
+            // {
+            //     extend: 'csvHtml5',
+            //     fieldBoundary: "",
+            //     text: 'Copy keywords',
+            //     // 'customize': function(data,options){return data.split('\n').join(',');},
+            //     header: false,
+            //     exportOptions: {
+            //         stripNewlines: true,
+            //         stripHtml: true,
+            //         decodeEntities: true,
+            //         columns: 1,
+            //         // format:{
+            //         //     body: function(html,i){console.log(html);return html}
+            //         // }
+            //     }
+            // },
         ],
         "columnDefs": [
         {
@@ -597,6 +634,7 @@ $(document).ready(function () {
             "targets": 0,
             "visible": false,
         }, {
+            "responsivePriority": 1,
             "name": "keyword",
             "targets": 1
         }, {
@@ -613,16 +651,23 @@ $(document).ready(function () {
             "visible": false,
         }, {
             "name": "search",
+            "responsivePriority": 3,
             "targets": 5,
             "visible": false,
         }, {
             "name": "domain",
+            "responsivePriority": 2,
             "targets": 6,
             "visible": false,
         }],
         order: [[ 0, 'desc' ]],
         colReorder: {},
-        stateSave: true
+        stateSave: true,
+        fixedHeader: true,
+        responsive: true,
+        // scrollY:        500,
+        // deferRender:    true,
+        // scroller:       true
     });
 });
 
