@@ -16,12 +16,7 @@ var objectStore;
 var myIp;
 
 
-$.getJSON('https://api.ipify.org?format=json', function (data) {
-    myIp = data.ip;
-});
-// $.getJSON("http://jsonip.com?callback=?", function (data) {
-//     myIp = data.host;
-// });
+
 
 
 
@@ -68,38 +63,25 @@ function getUrl(){
     return _.template(services[options.service])(options);
 }
 
-
-function ebayParser(){}
-    // s = req.lstrip('/**/nil/(').rstrip(')')
-    // sugg_texts = json.loads(s)['res']['sug']
-    // print('j', sugg_texts)
-    // return {'sugg_texts': sugg_texts}
-
-
-function twitterParser(){}
-    // j = json.loads(req)
-    // return {
-    //     'sugg_texts': [t['topic'] for t in j['topics']],
-    //     'meta': j,
-    //     'relevances': [t['rounded_score'] for t in j['topics']],
-    // }
-
-/** Parse response per service **/
-function parseServiceResponse(res){
-    var service = $('#service').val();
-    var parser = RESPONSE_TEMPLATES[service] || RESPONSE_TEMPLATES["default"];
-    return parser(res);
-}
 var RESPONSE_TEMPLATES = {
     "default": function(res){return res[1];},
     "google": function(res){return res[1];},
     "youtube": function(res){return res[1];},
     "yahoo": function(res){return _.map(res.gossip.results,'key');},
     "bing": function(res){return res[1];},
-    "ebay": function(res){return res.res.sug;},
+    "ebay": function(res){
+        return res.res? res.res.sug: undefined;
+    },
     "amazon": function(res){return res[1];},
-    "twitter": function(res){return Array.concat(res.users,_.map(res.topics,'topic'),res.hashtags,res.oneclick);}
+    "twitter": function(res){return _.concat(res.users,_.map(res.topics,'topic'),res.hashtags,res.oneclick);}
 };
+/** Parse response per service **/
+function parseServiceResponse(res){
+    var service = $('#service').val();
+    var parser = RESPONSE_TEMPLATES[service] || RESPONSE_TEMPLATES["default"];
+    return parser(res);
+}
+
 
 // setup a db. Ref: https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB
 
@@ -109,18 +91,16 @@ function errorHandler(){
     return this; // for chaining
 }
 var db;
-var dbReq = window.indexedDB.open("KeywordShitter2", 2);
+var dbReq = window.indexedDB.open("KeywordShitter2", 3);
+/** Error handler for all child transactions as events bubbe up **/
 dbReq.onerror = function (event) {
     console.error('dbReq', event);
 };
 dbReq.onsuccess = function (event) {
-    // Do something with request.result!
-    console.log('dbReq', event);
     db = event.target.result;
     db.onerror = function (event) {
-        // Generic error handler for all errors targeted at this database's
-        // requests!
-        console.error("Database error: " + event.target.errorCode);
+        // Generic error handler requests
+        console.error("Database error: " + event.currentTarget.error.errorCode, event.currentTarget.error.message, event);
     };
 };
 dbReq.onupgradeneeded = function (event) {
@@ -128,22 +108,18 @@ dbReq.onupgradeneeded = function (event) {
     db = event.target.result;
 
     if (!db.objectStoreNames.contains("suggestions")) {
-        objectStore = db.createObjectStore("suggestions", {
-            autoIncrement: true
+        var objectStore = db.createObjectStore("suggestions", {
+            autoIncrement: true, keyPath: 'id'
         });
-
         // Create an index to search suggestions by
         // he query that prompted the suggestion
-        objectStore.createIndex("search", "search", {
-            unique: false
-        });
-        // and by suggestion
-        objectStore.createIndex("keyword", "keyword", {
-            unique: false
-        });
+        if (!objectStore.indexNames.contains('search'))
+            objectStore.createIndex("search", "search", {unique: false});
 
-    } else {
-        // objectStore = db.objectStore("customers");
+        // and by suggestion/keyword
+        if (!objectStore.indexNames.contains('keyword'))
+            objectStore.createIndex("keyword", "keyword", {unique: false});
+
     }
 };
 
@@ -157,7 +133,7 @@ function StartJob() {
 
         hashMapResults[""] = 1;
         // hashMapResults[" "] = 1;
-        // hashMapResults["  "] = 1;
+        hashMapResults["  "] = 1;
 
         // update config
         prefixes = $('#prefixes').val().split(',');
@@ -229,7 +205,7 @@ function permuteResultsToQueue(retList, search){
             hashMapResults[cleanKw] = 1;
 
             // add base suggestion to queue
-            if (cleanKw!==search)
+            if (cleanKw && cleanKw.trim().length && cleanKw!==search)
                 keywordsToQuery[keywordsToQuery.length] = cleanKw;
 
             // add prefix permutations
@@ -257,80 +233,120 @@ function loadFromDB(){
         .getAll()
         .onsuccess = function(e) {
             if (e.target.result.length){
-                table.data(e.target.result);
+                /// grab the fields we want
                 var data =[];
                 for (var i = 0; i < e.target.result.length; i++) {
                     var d = e.target.result[i];
-                    data.push([i,d.keyword,d.Length,null,null,d.search]);
+                    var da = [
+                        d.id,
+                        d.keyword,
+                        d.length,
+                        d.volume,
+                        d.cpc,
+                        d.search,
+                        d.domain
+                    ];
+                    // also remove undefined so datatables doesn't bring up alerts
+                    da = da.map(function(v){return v===undefined ? null: v;});
+                    // parse nums
+                    // da = da.map(v => /^[\d+\.]+$/.test(v) ? Number(v): v);
+                    data.push(da);
                 }
                 table.rows.add(data);
             }
-            table.draw(false);
+            return table.draw(false);
         };
         reqObj.onerror=errorHandler;
+        return;
 }
 
 /** Display results **/
-function displayResults(retList, search, dontDisplay){
+function displayResults(retList, search, dontDisplay, url,data){
 
-
-
-
-
-
+    var rows=[];
     for (var i = 0; i < retList.length; i++) {
         var  cleanKw = CleanVal(retList[i]);
 
-        // we get an annoying popup alert if we add undefined values, catch them
-        if (cleanKw===undefined||table.rows()[0].length===undefined||cleanKw.length===undefined,search===undefined){
-            console.error('Undefined values',{
-                id: table.rows()[0].length,
-                keyword: cleanKw,
-                length: cleanKw? cleanKw.length: undefined,
-                search:search
-            });
-            continue;
+        // url might be in retlist
+        if (url===undefined) url=data[i].url;
 
-        } else if (cleanKw!==undefined && cleanKw.length){
-        // Check if suggestion is already displayed before adding
+        var da = [
+            table.rows()[0].length+i,
+            cleanKw,
+            cleanKw.length,
+            null,
+            null,
+            search,
+            extractDomain(url)
+            ];
+
+        // remove undefined values to avoid datatable alerts
+        da = da.map(function(v){return v===undefined ? null: v;});
+
+        // TODO Check if suggestion is already displayed before adding
         // var matches = table.data().filter(function(v){return v[1]===cleanKw && v[5]==search;}).count();
         // if (!matches)
-            table.row.add([
-                table.rows()[0].length,
-                cleanKw,
-                cleanKw.length,
-                null,
-                null,
-                search]);
-        }
+        rows.push(da);
     }
+    table.rows.add(rows);
     if (!dontDisplay) table.draw(false);
+}
+
+function extractDomain(url) {
+    if (url===undefined) return null;
+    var domain;
+    //find & remove protocol (http, ftp, etc.) and get domain
+    if (url.indexOf("://") > -1) {
+        domain = url.split('/')[2];
+    }
+    else {
+        domain = url.split('/')[0];
+    }
+
+    //find & remove port number
+    domain = domain.split(':')[0];
+
+    return domain;
 }
 
 /** Store new results in db and hashmap **/
 function storeResults(retList, search, url){
 
-    for (var i = 0; i < retList.length; i++) {
-        var cleanKw = CleanVal(retList[i]);
-        if (cleanKw.length){
-            // TODO check if I should add in bulk?
+    // We will add the items async in order
+    // Ref: http://stackoverflow.com/a/13666741/221742
+    var transaction = db.transaction(["suggestions"], "readwrite");
+    var store = transaction.objectStore("suggestions");
+    var i=0;
+    addNext();
 
-            // add to db
-            var transaction = db.transaction(["suggestions"], "readwrite");
-            transaction.onerror = errorHandler;
-            var objectStore = transaction.objectStore("suggestions");
-            addReq = objectStore.add({
-                keyword: cleanKw,
-                Length: cleanKw.length,
-                search: search,
-                ip: myIp,
-                url: this.url,
-                time: (new Date()).toUTCString()
-            });
-            addReq.onerror=errorHandler;
+    /** Like an async for loop to add each to db **/
+    function addNext() {
+        if (i<retList.length) {
+                var cleanKw = CleanVal(retList[i]);
+                if (cleanKw.length){
+                addReq = store.add({
+                    keyword: cleanKw,
+                    length: cleanKw.length,
+                    search: search,
+                    ip: myIp,
+                    url: url,
+                    domain: extractDomain(url),
+                    time: (new Date()).toUTCString()
+                });
+                addReq.onsuccess = addNext;
+
+                ++i;
+                return addReq;
+            } else {
+                // skip empty keywords
+                ++i;
+                return addNext.bind(this)();
+            }
+        } else {
+            return;// console.debug('populate complete for suggestions of ', search);
         }
-
     }
+
 }
 
 /** mark a search as done in the queue **/
@@ -359,14 +375,13 @@ function QueryKeyword(search) {
         .index("search")
         .getAll(search)
         .onsuccess = function(e) {
+            var domain = extractDomain(getUrl());
+            var results = e.target.result.filter(function(r){return r.domain==domain;});
             // console.log(e.target.result);
-            if (e.target.result.length){
+            if (results.length){
                 // search was done previously so display results from db
-                var retList = [];
-                for (var i = 0; i < e.target.result.length; i++) {
-                    retList.push(e.target.result[i].keyword);
-                }
-                displayResults(retList,search);
+                var retList=_.map(results,'keyword');
+                displayResults(retList,search,undefined,undefined,results);
                 markAsDone(search);
                 permuteResultsToQueue(retList);
                 queryLock = false;
@@ -381,20 +396,19 @@ function QueryKeyword(search) {
                     url: url,
                     jsonp: "jsonp",
                     dataType: "jsonp",
-                    // data: {
-                    //     q: search,
-                    //     client: "chrome"
-                    // },
                     success: function (res, statusText, jqXHR) {
 
                         var retList = parseServiceResponse(res);
                         var char, currentx;
+                        if (retList && retList.length){
+                            storeResults(retList, search, this.url);
+                            displayResults(retList, search, undefined, this.url);
+                            permuteResultsToQueue(retList);
+                        } else {
+                            console.warn('No reslts for query "',search,'" ', this.url);
+                        }
 
-                        storeResults(retList, search, this.url);
-                        displayResults(retList, search);
-                        permuteResultsToQueue(retList);
                         markAsDone(search);
-
                         queryLock = false;
 
                     },
@@ -542,14 +556,41 @@ function reset(){
 }
 
 $(document).ready(function () {
+    //
+    // $('#startjob').on('click',StartJob);
+    // $('#reset').on('click',reset);
+    // $('#load-from-cache').on('click',loadFromDB);
+
     loadSettings();
     table = $('#outtable').DataTable({
-        pageLength: 25,
+        pageLength: 50,
+        "lengthMenu": [ 10, 25, 50, 75, 100,800],
         dom:
         "<'row'<'col-sm-5'B><'col-sm-7'<'pull-right'p>>>" +
         "<'row'<'col-sm-8'i><'col-sm-4'<'pull-right'f>>>" +
             "<'row'<'col-sm-12'tr>>",
-        buttons: ['copyHtml5', 'csvHtml5','colvis','pageLength'],
+        buttons: [
+            'copyHtml5',
+            'csvHtml5',
+            'colvis',
+            'pageLength',
+            {
+                extend: 'csvHtml5',
+                fieldBoundary: "",
+                text: 'Copy keywords',
+                // 'customize': function(data,options){return data.split('\n').join(',');},
+                header: false,
+                exportOptions: {
+                    stripNewlines: true,
+                    stripHtml: true,
+                    decodeEntities: true,
+                    columns: 1,
+                    // format:{
+                    //     body: function(html,i){console.log(html);return html}
+                    // }
+                }
+            },
+        ],
         "columnDefs": [
         {
             "name": "id",
@@ -574,9 +615,17 @@ $(document).ready(function () {
             "name": "search",
             "targets": 5,
             "visible": false,
+        }, {
+            "name": "domain",
+            "targets": 6,
+            "visible": false,
         }],
         order: [[ 0, 'desc' ]],
         colReorder: {},
         stateSave: true
     });
+});
+
+$.getJSON('https://api.ipify.org?format=json', function (data) {
+    myIp = data.ip;
 });
