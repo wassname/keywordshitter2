@@ -77,6 +77,8 @@ lying internet</textarea>
                         <option>google books</option>
                         <option>google news</option>
                         <option>google shopping</option>
+                        <option>yandex</option>
+                        <option>baidu</option>
                       </select>
                     </div>
                     <div class="form-group">
@@ -84,6 +86,7 @@ lying internet</textarea>
                       <!-- ISO-3366-1: Alpha-2 Codes -->
                       <select value="us"  class="form-control" name="country" id="country" title="Country code. Two letters. Only works for google for now" >
                           <option value=""></option>
+                          <option value="us">United States (us)</option>
                           <option value="af">Afghanistan (af)</option>
                           <option value="ax">Åland Islands (ax)</option>
                           <option value="al">Albania (al)</option>
@@ -319,7 +322,6 @@ lying internet</textarea>
                           <option value="ua">Ukraine (ua)</option>
                           <option value="ae">United Arab Emirates (ae)</option>
                           <option value="gb">United Kingdom (gb)</option>
-                          <option value="us">United States (us)</option>
                           <option value="um">United States Minor Outlying Islands (um)</option>
                           <option value="uy">Uruguay (uy)</option>
                           <option value="uz">Uzbekistan (uz)</option>
@@ -339,16 +341,16 @@ lying internet</textarea>
                       <label for="lang">Lang code (google):</label>
                       <select class="form-control" title="Lang code. Two letters. Only works for google for now" class="form-control" id="lang" value="en" >
                           <option value=""></option>
+                          <option value="en" >English (default) (en)</option>
                           <option value="ar" >Arabic (ar)</option>
                           <option value="bg" >Bulgarian (bg)</option>
                           <option value="ca" >Catalan (ca)</option>
                           <option value="hr" >Croatian (hr)</option>
-                          <option value="zh-Hans" >Chinese (Simplified) (zh-Hans)</option>
-                          <option value="zh-Hant" >Chinese (Traditional) (zh-Hant)</option>
+                          <option value="zh-hans" >Chinese (Simplified) (zh-hans)</option>
+                          <option value="zh-hant" >Chinese (Traditional) (zh-hant)</option>
                           <option value="cs" >Czech (cs)</option>
                           <option value="da" >Danish (da)</option>
                           <option value="nl" >Dutch (nl)</option>
-                          <option value="en" >English (default) (en)</option>
                           <option value="fi" >Filipino (fi)</option>l
                           <option value="fi" >Finnish (fi)</option>
                           <option value="fr" >French (fr)</option>
@@ -382,11 +384,11 @@ lying internet</textarea>
 
                     <div class="form-group">
                       <label for="prefixes">Prefixes</label>
-                      <textarea type="text" title="These values are added before words to prompt the search suggestions" class="form-control" name="prefixes" id="prefixes"  >a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,y,x,y,z,how,which,why,where,who,when,are,what</textarea>
+                      <textarea type="text" title="These values are added before words to prompt the search suggestions" class="form-control" name="prefixes" id="prefixes"  > ,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,y,x,y,z,how,which,why,where,who,when,are,what</textarea>
                     </div>
                     <div class="form-group">
                       <label for="suffixes">Suffixes:</label>
-                      <textarea type="text" rows="2" title="These values are added after words to prompt the search suggestions" class="form-control" id="suffixes">a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,y,x,y,z,like,for,without,with,versus,vs,to,near,except,has</textarea>
+                      <textarea type="text" rows="2" title="These values are added after words to prompt the search suggestions" class="form-control" id="suffixes"> ,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,y,x,y,z,like,for,without,with,versus,vs,to,near,except,has</textarea>
                     </div>
 
                     <div class="form-group">
@@ -400,7 +402,7 @@ lying internet</textarea>
                     </div>
                     <div class="form-group">
                       <label for="rate-limit">Rate limit (for experts):</label>
-                      <input type="text"  title="Value between searches in milliseconds" class="form-control" id="rate-limit" value="750" name="rate-limit" title="Only change if you know what you are doing. This could get your ip banned, or place a burden on the suggest servers." disabled>
+                      <input type="text"  class="form-control" id="rate-limit" value="750" name="rate-limit" title="OValue between searches in milliseconds only change if you know what you are doing. This could get your ip banned, or place an unfair burden on the suggest servers." disabled>
                     </div>
 
                 </form>
@@ -464,6 +466,12 @@ lying internet</textarea>
 
     <a href="https://github.com/wassname/keywordshitter2"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
     <!-- Fork me on github... Do you get it? Do you! -->
+
+    <script>
+    $(document).ready(function () {
+        kws2Init();
+    });
+    </script>
 
 </body>
 
