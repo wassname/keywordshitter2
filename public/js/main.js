@@ -74,7 +74,7 @@ function parseServiceResponse(res,options){
             return _.map(res.gossip.results, 'key');
         },
         "ebay": function (res) {
-            return res.res ? res.res.sug : undefined;
+            return res.res ? res.res.sug : [];
         },
         "twitter": function (res) {
             return _.concat(res.users, _.map(res.topics, 'topic'), res.hashtags, res.oneclick);

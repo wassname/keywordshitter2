@@ -1,4 +1,4 @@
-function testData() {
+var testData = function () {
     return {
         domainUrls: {
             "api.bing.com": "http://api.bing.com/osjson.aspx?JsonType=callback&JsonCallback=jQuery111&query=a  &_=11111",
@@ -565,4 +565,4 @@ function testData() {
             }]
         }
     };
-}
+}();
