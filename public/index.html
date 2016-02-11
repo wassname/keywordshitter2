@@ -46,7 +46,7 @@ on purpose
 dismantled my
 lying internet</textarea>
                 </div>
-                <a class="btn btn-primary btn-lg" id="startjob" onclick="StartJob();" type="button" value="Shit Keywords!">Shit Keywords!</a>
+                <a class="btn btn-primary btn-lg" id="startjob" type="button" value="Shit Keywords!">Shit Keywords!</a>
 
 
                 <button class="btn btn-default" type="button" data-toggle="collapse" data-target="#advanced" aria-expanded="false" aria-controls="advanced">
@@ -57,12 +57,12 @@ lying internet</textarea>
                   About
                 </button>
 
-                <a class="btn btn-default" id="reset" title="Empty all input and results" onclick="reset();" type="button" value="Reset">Reset</a>
+                <a class="btn btn-default" id="reset" title="Empty all input and results" type="button" value="Reset">Reset</a>
 
                 <form id="advanced" class="collapse">
                     <br>
-                    <a class="btn btn-default" id="load-from-cache" title="Load cached data from previous sessions" onclick="loadFromDB();" type="button" value="load">Load cache</a>
-                    <a class="btn btn-default" id="export-from-cache" title="Export cached data from previous sessions as a json file" onclick="exportDB();" type="button" value="load">Export cache</a>
+                    <a class="btn btn-default" id="load-from-cache" title="Load cached data from previous sessions"  type="button" value="load">Load cache</a>
+                    <a class="btn btn-default" id="export-from-cache" title="Export cached data from previous sessions as a json file" type="button" value="load">Export cache</a>
 
                     <div class="form-group">
                       <label for="service">Service:</label>
@@ -395,16 +395,22 @@ lying internet</textarea>
 
                     <div class="form-group">
                         <label for="filter-positive" >Positive filter:</label>
-                        <textarea disabled id="filter-positive" name="filter-positive" class="form-control" rows="3" onkeyup="FilterIfNotWorking()"
+                        <textarea disabled id="filter-positive" name="filter-positive" class="form-control" rows="3"
                             placeholder="Positive Filter"></textarea>
                     </div>
                     <div class="form-group">
                         <label for="filter-negative">Negative filter:</label>
-                        <textarea disabled id="filter-negative" name="filter-negative" class="form-control" rows="3" onkeyup="FilterIfNotWorking()" placeholder="Negative Filter"></textarea>
+                        <textarea disabled id="filter-negative" name="filter-negative" class="form-control" rows="3"placeholder="Negative Filter"></textarea>
                     </div>
                     <div class="form-group">
                       <label for="rate-limit">Rate limit (for experts):</label>
-                      <input type="text"  class="form-control" id="rate-limit" value="750" name="rate-limit" title="OValue between searches in milliseconds only change if you know what you are doing. This could get your ip banned, or place an unfair burden on the suggest servers." disabled>
+                      <input type="text"  class="form-control" id="rate-limit" value="2000" name="rate-limit" title="Value between searches in milliseconds only change if you know what you are doing. This could get your ip banned, or place an unfair burden on the suggest servers." disabled>
+                    </div>
+
+                    <div class="checkbox">
+                      <label for="keep-running">
+                          <input type="checkbox" id="keep-running" name="keep-running" title="Keep running forever"></input>Continuous running:
+                      </label>
                     </div>
 
                 </form>
@@ -475,7 +481,7 @@ lying internet</textarea>
 
     <script>
     $(document).ready(function () {
-        kws2Init();
+        KWS.init();
     });
     </script>
 
