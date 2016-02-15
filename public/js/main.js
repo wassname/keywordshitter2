@@ -173,7 +173,10 @@ var KWS = function(){
                 this.FilterAndDisplay();
 
                 this.doWork = true;
+                this.progress1.start();
+
                 // $('#input').hide();
+                // $('#advanced').collapse("hide");
 
             } else {
 
@@ -189,6 +192,7 @@ var KWS = function(){
                 this.table.columns.adjust();
                 this.saveSettings();
                 this.FilterAndDisplay();
+                this.progress1.end();
             }
         },
 
@@ -204,6 +208,10 @@ var KWS = function(){
                         this.keywordsToQueryIndex++;
                         this.DoJob();
                     }
+
+                    var prog = parseInt(this.keywordsToQueryIndex/this.numOfInitialKeywords*100);
+                    this.progress1.set(prog);
+                    this.FilterAndDisplay();
 
                 } else {
                     if (this.options.keepRunning) {
@@ -267,7 +275,7 @@ var KWS = function(){
             }, []);
 
             // add to queue
-            this.keywordsToQuery.push.apply(this.keywordsToQuery,newInputs);
+            this.keywordsToQuery=_.concat(this.keywordsToQuery,newInputs);
 
             return newInputs;
         },
@@ -285,11 +293,18 @@ var KWS = function(){
                         var timeStamp = (new Date()).toISOString().replace(/[:\.]/g,'_').slice(0,-5);
                         name = 'keywordshitter_'+timeStamp+'_r'+e.target.result.length+'.json';
                         saveAs(blob,name);
-                        if (success) success(blob);
+                        if (success instanceof Function) success(blob);
                     }
                     return blob;
                 };
                 return reqObj;
+        },
+
+        clearDB: function(){
+            this.db.transaction(["suggestions"], "readwrite")
+                .objectStore("suggestions")
+                .clear();
+            console.warn('cleared all indexedDB data');
         },
 
         /** Display data from db upon pressing load button **/
@@ -303,19 +318,10 @@ var KWS = function(){
                         /// grab the fields we want
                         var data =[];
                         for (var i = 0; i < e.target.result.length; i++) {
-                            var d = e.target.result[i];
-                            var da = [
-                                d.id,
-                                d.keyword,
-                                d.length,
-                                d.volume,
-                                d.cpc,
-                                d.search,
-                                d.domain
-                            ];
+                            var da = e.target.result[i];
 
                             // also remove undefined so datatables doesn't bring up alerts
-                            da = da.map(function(v){return v===undefined ? null: v;});
+                            da = _.mapValues(da, function(v){return v===undefined ? null: v;});
 
                             // parse nums
                             // da = da.map(v => /^[\d+\.]+$/.test(v) ? Number(v): v);
@@ -339,19 +345,28 @@ var KWS = function(){
 
                 // url might be in retlist
                 if (url===undefined) url=data[i].url;
-
-                var da = [
-                    this.table.rows()[0].length+i,
-                    cleanKw,
-                    cleanKw.length,
-                    null,
-                    null,
-                    search,
-                    this.extractDomain(url)
-                    ];
+                //
+                // var da = [
+                //     this.table.rows()[0].length+i,
+                //     cleanKw,
+                //     cleanKw.length,
+                //     null,
+                //     null,
+                //     search,
+                //     this.extractDomain(url)
+                //     ];
+                var da = {
+                    id: this.table.rows()[0].length+i,
+                    keyword: cleanKw,
+                    length: cleanKw.length,
+                    volume: null,
+                    cpc: null,
+                    search: search,
+                    domain: this.extractDomain(url)
+                };
 
                 // remove undefined values to avoid datatable alerts
-                da = da.map(function(v){return v===undefined ? null: v;});
+                da = _.mapValues(da, function(v){return v===undefined ? null: v;});
 
                 // TODO Check if suggestion is already displayed before adding
                 // var matches = table.data().filter(function(v){return v[1]===cleanKw && v[5]==search;}).count();
@@ -359,7 +374,8 @@ var KWS = function(){
                 rows.push(da);
             }
             this.table.rows.add(rows);
-            if (!dontDisplay) this.table.draw(false);
+            // if table is large lets defer rending to end to speed it up
+            if (!dontDisplay && this.table.data().length<this.options.deferTableUpdatesAtRows) this.table.draw(false);
         },
 
         /** Takes url string and returns domain e.g. www.google.com or google.com
@@ -616,8 +632,9 @@ var KWS = function(){
         /** overrides default with dom options with arguments options **/
         getOptions: function(argOptions){
             var defaultOptions={
+                deferTableUpdatesAtRows: 5000,
                 keepRunning: false,
-                maxQueueDisplay: 10000,
+                maxQueueDisplay: 5000,
                 country: "",
                 filterNegative: "",
                 filterPositive: "",
@@ -710,16 +727,21 @@ var KWS = function(){
 
             window.setInterval(this.DoJob.bind(this), this.options.rateLimit);
 
+            $('#progress1').addClass('progressjs-progress');
+            this.progress1 = progressJs("#progress1");
+
+
             $('#startjob').on('click',this.toggleWork.bind(this));
             $('#reset').on('click',this.reset.bind(this));
             $('#load-from-cache').on('click',this.loadFromDB.bind(this));
             $('#export-from-cache').on('click',this.exportDB.bind(this));
+            $('#clear-cache').on('click',this.clearDB.bind(this));
             // $('#filter-positive').on('click',this.FilterIfNotWorking.bind(this));
             // $('#filter-negative').on('click',this.FilterIfNotWorking.bind(this));
 
 
             this.table = $('#outtable').DataTable({
-                pageLength: 50,
+                pageLength: 25,
                 "lengthMenu": [ 10, 25, 50, 75, 100,800],
                 dom:
                 "<'row'<'col-sm-5'B><'col-sm-7'<'pull-right'p>>>" +
@@ -734,53 +756,64 @@ var KWS = function(){
                          buttons: [
                              'copyHtml5',
                              'csvHtml5',
+                             {
+                                 extend: 'csvHtml5',
+                                 fieldBoundary: "",
+                                 text: 'Copy keywords',
+                                 // 'customize': function(data,options){return data.split('\n').join(',');},
+                                 header: false,
+                                 exportOptions: {
+                                     stripNewlines: true,
+                                     stripHtml: true,
+                                     decodeEntities: true,
+                                     columns: 1,
+                                     // format:{
+                                     //     body: function(html,i){console.log(html);return html}
+                                     // }
+                                 }
+                             },
                          ]
-                     }
-                    // {
-                    //     extend: 'csvHtml5',
-                    //     fieldBoundary: "",
-                    //     text: 'Copy keywords',
-                    //     // 'customize': function(data,options){return data.split('\n').join(',');},
-                    //     header: false,
-                    //     exportOptions: {
-                    //         stripNewlines: true,
-                    //         stripHtml: true,
-                    //         decodeEntities: true,
-                    //         columns: 1,
-                    //         // format:{
-                    //         //     body: function(html,i){console.log(html);return html}
-                    //         // }
-                    //     }
-                    // },
+                     },
+
                 ],
                 "columnDefs": [
                 {
                     "name": "id",
+                    "data": "id",
                     "targets": 0,
                     "visible": false,
                 }, {
-                    "responsivePriority": 1,
                     "name": "keyword",
-                    "targets": 1
+                    "data": "keyword",
+                    "responsivePriority": 1,
+                    "targets": 1,
                 }, {
                     "name": "length",
+                    "data": "length",
                     "targets": 2,
                     "visible": false,
+                    "type": "num"
                 }, {
                     "name": "volume",
+                    "data": "volume",
                     "targets": 3,
                     "visible": false,
+                    "type": "num"
                 }, {
                     "name": "cpc",
+                    "data": "cpc",
                     "targets": 4,
                     "visible": false,
+                    "type": "num"
                 }, {
                     "name": "search",
+                    "data": "search",
                     "responsivePriority": 3,
                     "targets": 5,
                     "visible": false,
                 }, {
                     "name": "domain",
+                    "data": "domain",
                     "responsivePriority": 2,
                     "targets": 6,
                     "visible": false,
@@ -788,8 +821,14 @@ var KWS = function(){
                 order: [[ 0, 'desc' ]],
                 // colReorder: {},
                 stateSave: true,
-                fixedHeader: true,
-                // responsive: true,
+                "bDeferRender": true,
+                // fixedHeader: true,
+                //  responsive: {
+                //     details: {
+                //         type: 'column',
+                //         target: 'tr'
+                //     },
+                // },
                 // scrollY:        500,
                 // deferRender:    true,
                 // scroller:       true

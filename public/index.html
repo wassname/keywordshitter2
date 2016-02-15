@@ -7,12 +7,13 @@
     <meta property="og:title" content="Keyword Shitter2 - The Bulk Keyword Tool" />
     <meta property="og:image" content="img/bl.png" />
 
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.10/css/jquery.dataTables.min.css"/>
+    <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.10/css/jquery.dataTables.min.css"/>
     <!-- <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.1.0/css/buttons.dataTables.min.css"/> -->
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/fixedheader/3.1.0/css/fixedHeader.dataTables.min.css"/>
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/keytable/2.1.0/css/keyTable.dataTables.min.css"/>
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.0.0/css/responsive.dataTables.min.css"/>
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/scroller/1.4.0/css/scroller.dataTables.min.css"/>
+    <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/fixedheader/3.1.0/css/fixedHeader.dataTables.min.css"/>
+    <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/keytable/2.1.0/css/keyTable.dataTables.min.css"/>
+    <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/responsive/2.0.0/css/responsive.dataTables.min.css"/>
+    <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/scroller/1.4.0/css/scroller.dataTables.min.css"/>
+    <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/progress.js/0.1.0/progressjs.min.css"/>
 
 
 
@@ -36,16 +37,17 @@
 
         <div class="row">
 
-            <div class="col-sm-12">
+            <div class="col-sm-7">
                 <div id="numofkeywords"></div>
                 <div class="form-group">
                     <label for="input" ><h3>Input:</h3></label>
-                    <textarea id="input" autocomplete="off" autocorrect="off" style="height: 400px; width: 400px;" autocapitalize="off" spellcheck="false" rows="8" title="queue" class="form-control"  placeholder="I accidentally
+                    <textarea id="input" autocomplete="off" autocorrect="off" style="resize: none; height: 400px; width: 400px;" autocapitalize="off" spellcheck="false" rows="8" title="queue" class="form-control"  placeholder="I accidentally
 on purpose">I accidentally
 on purpose
 dismantled my
 lying internet</textarea>
                 </div>
+
                 <a class="btn btn-primary btn-lg" id="startjob" type="button" value="Shit Keywords!">Shit Keywords!</a>
 
 
@@ -58,11 +60,14 @@ lying internet</textarea>
                 </button>
 
                 <a class="btn btn-default" id="reset" title="Empty all input and results" type="button" value="Reset">Reset</a>
-
+            </div>
+            <div class="col-sm-5">
                 <form id="advanced" class="collapse">
                     <br>
-                    <a class="btn btn-default" id="load-from-cache" title="Load cached data from previous sessions"  type="button" value="load">Load cache</a>
-                    <a class="btn btn-default" id="export-from-cache" title="Export cached data from previous sessions as a json file" type="button" value="load">Export cache</a>
+                    <a class="btn btn-default" id="load-from-cache" title="Load cached data from previous sessions"  type="button" >Load cache</a>
+                    <a class="btn btn-default" id="export-from-cache" title="Export cached data from previous sessions as a json file" type="button">Export cache</a>
+
+                    <a class="btn btn-default" id="clear-cache" title="Delete cached data" type="button">Delete cache</a>
 
                     <div class="form-group">
                       <label for="service">Service:</label>
@@ -340,7 +345,7 @@ lying internet</textarea>
                     </select>
                     </div>
                     <div class="form-group">
-                      <label for="lang">Lang code (google):</label>
+                      <label for="lang">Lang code (google & yandex):</label>
                       <select class="form-control" title="Lang code. Two letters. Only works for google for now" class="form-control" id="lang" value="en" >
                           <option value=""></option>
                           <option value="en" >English (default) (en)</option>
@@ -393,18 +398,18 @@ lying internet</textarea>
                       <textarea type="text" rows="2" title="These values are added after words to prompt the search suggestions" class="form-control" id="suffixes"> ,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,y,x,y,z,like,for,without,with,versus,vs,to,near,except,has</textarea>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group"  style="display: none">
                         <label for="filter-positive" >Positive filter:</label>
-                        <textarea disabled id="filter-positive" name="filter-positive" class="form-control" rows="3"
+                        <textarea disabled id="filter-positive" name="filter-positive" class="form-control" rows="2"
                             placeholder="Positive Filter"></textarea>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group"  style="display: none">
                         <label for="filter-negative">Negative filter:</label>
-                        <textarea disabled id="filter-negative" name="filter-negative" class="form-control" rows="3"placeholder="Negative Filter"></textarea>
+                        <textarea disabled id="filter-negative" name="filter-negative" class="form-control" rows="2"placeholder="Negative Filter"></textarea>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" style="display: none">
                       <label for="rate-limit">Rate limit (for experts):</label>
-                      <input type="text"  class="form-control" id="rate-limit" value="2000" name="rate-limit" title="Value between searches in milliseconds only change if you know what you are doing. This could get your ip banned, or place an unfair burden on the suggest servers." disabled>
+                      <input type="text"  class="form-control" id="rate-limit" value="750" name="rate-limit" title="Value between searches in milliseconds only change if you know what you are doing. This could get your ip banned, or place an unfair burden on the suggest servers." disabled>
                     </div>
 
                     <div class="checkbox">
@@ -433,15 +438,16 @@ lying internet</textarea>
 
         <div class="row">
             <div class="col-sm-12">
-                <hr>
+                <hr id="progress1">
+                <br id="progress2">
             </div>
         </div>
 
         <div class="row">
-            <div class="col-sm-12">
+            <div id="results" class="col-sm-12">
                 <h2>Results</h2>
                 <!-- <div class="table-responsive"> -->
-                <table id="outtable" class=" table table-condensed compact dt-responsive hover" cellspacing="0" width="100%">
+                <table id="outtable" class=" table table-condensed compact dt-responsive" cellspacing="0" width="100%">
                     <thead>
                         <tr>
                             <th>id</th>
@@ -470,6 +476,8 @@ lying internet</textarea>
     <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.2.0/lodash.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2014-11-29/FileSaver.min.js"></script>
     <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/localforage/1.3.3/localforage.js"></script> -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/progress.js/0.1.0/progress.min.js"></script>
+
 
 
 
