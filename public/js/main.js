@@ -359,6 +359,7 @@ var KWS = function(){
                     id: this.table.rows()[0].length+i,
                     keyword: cleanKw,
                     length: cleanKw.length,
+                    words: cleanKw.trim().split(/ +/).length,
                     volume: null,
                     cpc: null,
                     search: search,
@@ -432,11 +433,12 @@ var KWS = function(){
                         addReq = store.add({
                             keyword: cleanKw,
                             length: cleanKw.length,
+                            words: cleanKw.trim().split(/ +/).length,
                             search: search,
                             ip: this.myIp,
                             url: url,
                             domain: self.extractDomain(url),
-                            time: (new Date()).toUTCString()
+                            time: (new Date()).toUTCString(),
                         });
                         addReq.onsuccess = addNext;
 
@@ -817,7 +819,14 @@ var KWS = function(){
                     "responsivePriority": 2,
                     "targets": 6,
                     "visible": false,
-                }],
+                }, {
+                    "name": "words",
+                    "data": "words",
+                    "targets": 7,
+                    "visible": false,
+                    "type": "num"
+                },
+            ],
                 order: [[ 0, 'desc' ]],
                 // colReorder: {},
                 stateSave: true,
