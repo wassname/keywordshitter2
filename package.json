@@ -2,12 +2,21 @@
   "name": "keywordshitter2",
   "version": "0.0.5",
   "description": "The second generation of keyword shitter. Bigger, better, and more pungent than other products.",
-  "main": "public/index.html",
+  "main": "server.js",
+  "repository": "https://github.com/wassname/keywordshitter2",
   "scripts": {
-    "test": "mocha",
+    "test": "public/test.html",
     "build-css": "lessc ./src/less/main.less > public/css/style.css",
-    "build": "npm run build-css"
+    "build": "npm run build-css",
+    "start": "node server.js"
   },
-  "author": "",
-  "license": "MIT"
+  "author": "blackmia,wassname",
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "cors": "^2.7.1",
+    "express": "^4.13.4",
+    "lessc": "latest",
+    "mocha": "^2.4.5"
+  }
 }
