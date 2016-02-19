@@ -47,7 +47,7 @@ var KWS = function(){
                     "twitter":
                     "https://twitter.com/i/search/typeahead.json?count=30&result_type=topics&src=SEARCH_BOX&callback=?&q=",
                     "baidu": "http://suggestion.baidu.com/su?cb=?&wd=",
-                    "yandex": "https://yandex.com/suggest/suggest-ya.cgi?callback=?&q=?&n=30&v=4&uil={lang}&part="
+                    "yandex": "https://yandex.com/suggest/suggest-ya.cgi?callback=?&q=?&n=30&v=4&uil={lang}&part=",
                 };
 
             return _.template(services[this.options.service])(this.options);
@@ -78,7 +78,7 @@ var KWS = function(){
                     return _.map(res[1], function(r){
                         return typeof r === 'string' ? r : r[1];
                     });
-                },
+                }
             };
             var parser = RESPONSE_TEMPLATES[this.options.service] || RESPONSE_TEMPLATES["default"];
             return parser(res);
@@ -247,7 +247,7 @@ var KWS = function(){
 
             this.hashMapInputs[search] = true;
 
-            // sort so the shortest is first in the queue
+            // sort so the shortest is first in the queue TODO add option?
             // retList.sort(function (a, b) {
             //   return a.length - b.length;
             // });
@@ -260,10 +260,6 @@ var KWS = function(){
             }
             // clean
             retList=retList.map(this.CleanVal);
-
-
-
-
 
             // get permutations
             var newInputs = retList.reduce(function(result, keyword){
@@ -345,16 +341,7 @@ var KWS = function(){
 
                 // url might be in retlist
                 if (url===undefined) url=data[i].url;
-                //
-                // var da = [
-                //     this.table.rows()[0].length+i,
-                //     cleanKw,
-                //     cleanKw.length,
-                //     null,
-                //     null,
-                //     search,
-                //     this.extractDomain(url)
-                //     ];
+
                 var da = {
                     id: this.table.rows()[0].length+i,
                     keyword: cleanKw,
@@ -738,8 +725,6 @@ var KWS = function(){
             $('#load-from-cache').on('click',this.loadFromDB.bind(this));
             $('#export-from-cache').on('click',this.exportDB.bind(this));
             $('#clear-cache').on('click',this.clearDB.bind(this));
-            // $('#filter-positive').on('click',this.FilterIfNotWorking.bind(this));
-            // $('#filter-negative').on('click',this.FilterIfNotWorking.bind(this));
 
 
             this.table = $('#outtable').DataTable({
@@ -768,7 +753,7 @@ var KWS = function(){
                                      stripNewlines: true,
                                      stripHtml: true,
                                      decodeEntities: true,
-                                     columns: 1,
+                                     columns: 'keyword',
                                      // format:{
                                      //     body: function(html,i){console.log(html);return html}
                                      // }
@@ -780,17 +765,17 @@ var KWS = function(){
                 ],
                 "columnDefs": [
                 {
-                    "name": "id",
+                    "title": "id",
                     "data": "id",
                     "targets": 0,
                     "visible": false,
                 }, {
-                    "name": "keyword",
+                    "title": "Keyword",
                     "data": "keyword",
                     "responsivePriority": 1,
                     "targets": 1,
                 }, {
-                    "name": "length",
+                    "title": "Length",
                     "data": "length",
                     "targets": 2,
                     "visible": false,
@@ -802,25 +787,25 @@ var KWS = function(){
                     "visible": false,
                     "type": "num"
                 }, {
-                    "name": "cpc",
+                    "title": "CPC",
                     "data": "cpc",
                     "targets": 4,
                     "visible": false,
                     "type": "num"
                 }, {
-                    "name": "search",
+                    "title": "Search",
                     "data": "search",
                     "responsivePriority": 3,
                     "targets": 5,
                     "visible": false,
                 }, {
-                    "name": "domain",
+                    "title": "Domain",
                     "data": "domain",
                     "responsivePriority": 2,
                     "targets": 6,
                     "visible": false,
                 }, {
-                    "name": "words",
+                    "title": "Words",
                     "data": "words",
                     "targets": 7,
                     "visible": false,
