@@ -16,6 +16,25 @@ var testData = function () {
             "twitter.com": "https://twitter.com/i/search/typeahead.json?count=30&result_type=topics&src=SEARCH_BOX&callback=jQuery111&q=I accidentally&_=11111"
         },
         responses: {
+            "linkedin": {
+                "resultList": [{
+                    "sourceID": "sitefeature",
+                    "displayName": "Where is the Answers feature?",
+                    "subLine": "",
+                    "rank": 0,
+                    "id": "162",
+                    "url": "http://help.linkedin.com/app/answers/global/id/35227/trk/search-typeahead",
+                    "headLine": "<strong>Where<\/strong> is the Answers feature?"
+                }, {
+                    "sourceID": "sitefeature",
+                    "displayName": "Where are the &quot;Settings&quot; and &quot;Sign Out&quot; links on my homepage?",
+                    "subLine": "",
+                    "rank": 1,
+                    "id": "205",
+                    "url": "http://help.linkedin.com/app/answers/global/id/4642/trk/search-typeahead",
+                    "headLine": "<strong>Where<\/strong> are the &quot;Settings&quot; and &quot;Sign Out&quot; links on my homepage?"
+                }]
+            },
             "yahoo": {
                 "gossip": {
                     "qry": "where",

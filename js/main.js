@@ -13,6 +13,38 @@ var KWS = function(){
         keywordsToQuery: [],
         keywordsToQueryIndex: 0,
         numOfInitialKeywords: 0,
+        services:{
+            "google":
+            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&gl=${country}&callback=?&q=",
+            "google news":
+            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=n&gl=${country}&callback=?&q=",
+            "google shopping":
+            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=sh&gl=${country}&callback=?&q=",
+            "google books":
+            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=bo&gl=${country}&callback=?&q=",
+            "youtube":
+            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=yt&gl=${country}&callback=?&q=",
+            "google videos":
+            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=v&gl=${country}&callback=?&q=",
+            "google images":
+            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=i&gl=${country}&callback=?&q=",
+            "yahoo":
+            "https://search.yahoo.com/sugg/ff?output=jsonp&appid=ffd&callback=?&command=",
+            "bing": "http://api.bing.com/osjson.aspx?JsonType=callback&JsonCallback=?&query=",
+            "ebay":
+            "http://autosug.ebay.com/autosug?_jgr=1&sId=0&_ch=0&callback=?&kwd=",
+            "amazon":
+            "http://completion.amazon.co.uk/search/complete?method=completion&search-alias=aps&mkt=4&callback=?&q=",
+            "twitter":
+            "https://twitter.com/i/search/typeahead.json?count=30&result_type=topics&src=SEARCH_BOX&callback=?&q=",
+            "baidu": "http://suggestion.baidu.com/su?cb=?&wd=",
+            "yandex": "https://yandex.com/suggest/suggest-ya.cgi?callback=?&q=?&n=30&v=4&uil={lang}&part=",
+            "google play": "https://market.android.com/suggest/SuggRequest?json=1&c=0&hl=${lang}&gl=${country}&callback=?&query=", //
+            "google play apps": "https://market.android.com/suggest/SuggRequest?json=1&c=3&hl=${lang}&gl=${country}&callback=?&query=",
+            "google play movies": "https://market.android.com/suggest/SuggRequest?json=1&c=4&hl=${lang}&gl=${country}&callback=?&query=",
+            "google play books": "https://market.android.com/suggest/SuggRequest?json=1&c=1&hl=${lang}&gl=${country}&callback=?&query=",
+            // "kickasstorrents": "https://kat.cr/get_queries.php?query=", // not jsonp
+        },
         /**
          * Get the service url based on options set in the dom.
          * @return {String} A jsonp url for search suggestions with query missing from the end.
@@ -22,35 +54,7 @@ var KWS = function(){
             // Ref: https://github.com/bnoordhuis/mozilla-central/tree/master/browser/locales/en-US/searchplugins
             // Ref: https://developers.google.com/custom-search/json-api/v1/reference/cse/list
             // https://developers.google.com/custom-search/docs/ref_languages
-            services={
-                    "google":
-                    "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&gl=${country}&callback=?&q=",
-                    "google news":
-                    "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=n&gl=${country}&callback=?&q=",
-                    "google shopping":
-                    "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=sh&gl=${country}&callback=?&q=",
-                    "google books":
-                    "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=bo&gl=${country}&callback=?&q=",
-                    "youtube":
-                    "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=yt&gl=${country}&callback=?&q=",
-                    "google videos":
-                    "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=v&gl=${country}&callback=?&q=",
-                    "google images":
-                    "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=i&gl=${country}&callback=?&q=",
-                    "yahoo":
-                    "https://search.yahoo.com/sugg/ff?output=jsonp&appid=ffd&callback=?&command=",
-                    "bing": "http://api.bing.com/osjson.aspx?JsonType=callback&JsonCallback=?&query=",
-                    "ebay":
-                    "http://autosug.ebay.com/autosug?_jgr=1&sId=0&_ch=0&callback=?&kwd=",
-                    "amazon":
-                    "http://completion.amazon.co.uk/search/complete?method=completion&search-alias=aps&mkt=4&callback=?&q=",
-                    "twitter":
-                    "https://twitter.com/i/search/typeahead.json?count=30&result_type=topics&src=SEARCH_BOX&callback=?&q=",
-                    "baidu": "http://suggestion.baidu.com/su?cb=?&wd=",
-                    "yandex": "https://yandex.com/suggest/suggest-ya.cgi?callback=?&q=?&n=30&v=4&uil={lang}&part=",
-                };
-
-            return _.template(services[this.options.service])(this.options);
+            return _.template(this.services[this.options.service])(this.options);
         },
 
 
@@ -78,7 +82,14 @@ var KWS = function(){
                     return _.map(res[1], function(r){
                         return typeof r === 'string' ? r : r[1];
                     });
-                }
+                },
+                "linkedin": function(res){
+                    return _.map(res.resultList,'displayName');
+                },
+                "google play": function(res){return _.map(res,'s')},
+                "google play apps": function(res){return _.map(res,'s')},
+                "google play movies": function(res){return _.map(res,'s')},
+                "google play books": function(res){return _.map(res,'s')},
             };
             var parser = RESPONSE_TEMPLATES[this.options.service] || RESPONSE_TEMPLATES["default"];
             return parser(res);
@@ -493,7 +504,7 @@ var KWS = function(){
                         url = self.getUrl()+search;
                         $.ajax({
                             url: url,
-                            jsonp: "jsonp",
+                            // jsonp: "jsonp",
                             dataType: "jsonp",
                             success: function (res, statusText, jqXHR) {
 
@@ -513,10 +524,13 @@ var KWS = function(){
                                 return;
 
                             },
-                            error: function(e){
-                                console.error(e);
+                            error: function(jqXHR,errorText,error){
+                                console.error(errorText,this.url,this,jqXHR,error);
                                 self.queryLock = false;
                                 return;
+                            },
+                            callback: function(){
+                                console.log(this,arguments);
                             }
                         });
                     }
@@ -526,26 +540,23 @@ var KWS = function(){
 
         /** Clean input, may not all be needed **/
         CleanVal: function(input) {
+            // We want to clean search terms but it's not possible to do this perfectly
+            // as differen't search engines strip differen't amounts from the term
+            // so we will keep as much details as possible
 
-            function escapeHtml(unsafe) {
-                return unsafe
-                     .replace(/&/g, "&amp;")
-                     .replace(/</g, "&lt;")
-                     .replace(/>/g, "&gt;")
-                     .replace(/"/g, "&quot;")
-                     .replace(/'/g, "&#039;");
-             }
+            // Search engines are sensitive to whitespace so we do not want to trim
+            // Some return html or escaped html, so we do want to convert to text
 
-            // google returns lowercase
+            // removed escaped html and html tags
+            // e.g. '<b>A&amp;M</b>' => 'A&M'
+            input=$('<div />').html(input).text();
+
+            // I don't know of any search engines sentitive or case so make all lowercase
             input = input.toLowerCase();
-            input = escapeHtml(input);
 
-            // not sure if we want to trim, the search engines are sensitive to
-            // whitespace. (and also last search)
-            // input = input.trim();
-
-            // this removes navigation suggestions
+            // this removes navigation suggestions, perhaps we need to move this to result parser
             if (input.length > 4 && input.substring(0, 4) == "http") input = "";
+
             return input;
         },
 
@@ -711,6 +722,15 @@ var KWS = function(){
 
         init: function(){
             this.setUpDb();
+
+            // add this.servicess to search engine settings
+            for (var service in this.services) {
+                if (this.services.hasOwnProperty(service)) {
+                    $('#service').append('<option>'+service+'</option>')
+                }
+            }
+
+
             this.loadSettings();
             this.options = this.getOptions();
 
@@ -725,6 +745,7 @@ var KWS = function(){
             $('#load-from-cache').on('click',this.loadFromDB.bind(this));
             $('#export-from-cache').on('click',this.exportDB.bind(this));
             $('#clear-cache').on('click',this.clearDB.bind(this));
+
 
 
             this.table = $('#outtable').DataTable({
