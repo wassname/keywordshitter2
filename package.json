@@ -8,15 +8,20 @@
     "test": "public/test.html",
     "build-css": "lessc ./src/less/main.less > public/css/style.css",
     "build": "npm run build-css",
-    "start": "node server.js"
+    "start": "node server.js",
+    "debug": "NODE_ENV=dev DEBUG=* nodemon server",
+    "production": "NODE_ENV=production npm start"
   },
   "author": "blackmia,wassname",
   "license": "MIT",
   "devDependencies": {
     "chai": "^3.5.0",
     "cors": "^2.7.1",
+    "debug": "^2.2.0",
     "express": "^4.13.4",
     "lessc": "latest",
-    "mocha": "^2.4.5"
+    "mocha": "^2.4.5",
+    "morgan": "^1.6.1",
+    "winston": "^2.1.1"
   }
 }

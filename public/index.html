@@ -72,7 +72,7 @@ lying internet</textarea>
                     <div class="form-group">
                       <label for="service">Service:</label>
                       <select class="form-control" name="service" id="service" >
-                        <option>google</option>
+                        <!-- <option>google</option>
                         <option>twitter</option>
                         <option>yahoo</option>
                         <option>bing</option>
@@ -86,8 +86,32 @@ lying internet</textarea>
                         <option>google shopping</option>
                         <option>yandex</option>
                         <option>baidu</option>
+                        <option>linkedin</option> -->
+                        <!-- <option>yelp</option> -->
                       </select>
                     </div>
+
+
+                    <div class="form-group">
+                      <label for="prefixes">Prefixes</label>
+                      <textarea type="text" title="These values are added before words to prompt the search suggestions" class="form-control" name="prefixes" id="prefixes"  > ,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,y,x,y,z,how,which,why,where,who,when,are,what</textarea>
+                    </div>
+                    <div class="form-group">
+                      <label for="suffixes">Suffixes:</label>
+                      <textarea type="text" rows="2" title="These values are added after words to prompt the search suggestions" class="form-control" id="suffixes"> ,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,y,x,y,z,like,for,without,with,versus,vs,to,near,except,has</textarea>
+                    </div>
+
+                    <div class="form-group" style="display: none">
+                      <label for="rate-limit">Rate limit (for experts):</label>
+                      <input type="text"  class="form-control" id="rate-limit" value="750" name="rate-limit" title="Value between searches in milliseconds only change if you know what you are doing. This could get your ip banned, or place an unfair burden on the suggest servers." disabled>
+                    </div>
+
+                    <div class="checkbox">
+                      <label for="keep-running">
+                          <input type="checkbox" id="keep-running" name="keep-running" title="Keep running forever"></input>Continuous running:
+                      </label>
+                    </div>
+
                     <div class="form-group">
                       <label for="country">Country code (google):</label>
                       <!-- ISO-3366-1: Alpha-2 Codes -->
@@ -389,34 +413,6 @@ lying internet</textarea>
                       </select>
                     </div>
 
-                    <div class="form-group">
-                      <label for="prefixes">Prefixes</label>
-                      <textarea type="text" title="These values are added before words to prompt the search suggestions" class="form-control" name="prefixes" id="prefixes"  > ,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,y,x,y,z,how,which,why,where,who,when,are,what</textarea>
-                    </div>
-                    <div class="form-group">
-                      <label for="suffixes">Suffixes:</label>
-                      <textarea type="text" rows="2" title="These values are added after words to prompt the search suggestions" class="form-control" id="suffixes"> ,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,y,x,y,z,like,for,without,with,versus,vs,to,near,except,has</textarea>
-                    </div>
-
-                    <div class="form-group"  style="display: none">
-                        <label for="filter-positive" >Positive filter:</label>
-                        <textarea disabled id="filter-positive" name="filter-positive" class="form-control" rows="2"
-                            placeholder="Positive Filter"></textarea>
-                    </div>
-                    <div class="form-group"  style="display: none">
-                        <label for="filter-negative">Negative filter:</label>
-                        <textarea disabled id="filter-negative" name="filter-negative" class="form-control" rows="2"placeholder="Negative Filter"></textarea>
-                    </div>
-                    <div class="form-group" style="display: none">
-                      <label for="rate-limit">Rate limit (for experts):</label>
-                      <input type="text"  class="form-control" id="rate-limit" value="750" name="rate-limit" title="Value between searches in milliseconds only change if you know what you are doing. This could get your ip banned, or place an unfair burden on the suggest servers." disabled>
-                    </div>
-
-                    <div class="checkbox">
-                      <label for="keep-running">
-                          <input type="checkbox" id="keep-running" name="keep-running" title="Keep running forever"></input>Continuous running:
-                      </label>
-                    </div>
 
                 </form>
 
@@ -471,11 +467,11 @@ lying internet</textarea>
 
     </div>
 
-    <script src="//cdnjs.cloudflare.com/ajax/libs/datatables/1.10.10/js/jquery.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.2.0/jquery.js"></script>
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
     <script src="//cdn.datatables.net/s/bs/jszip-2.5.0,dt-1.10.10,b-1.1.0,b-colvis-1.1.0,b-html5-1.1.0,b-print-1.1.0,cr-1.3.0,fh-3.1.0,kt-2.1.0,r-2.0.0,se-1.1.0/datatables.min.js" crossorigin="anonymous"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.2.0/lodash.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2014-11-29/FileSaver.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2014-11-29/FileSaver.min.js"></script>
     <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/localforage/1.3.3/localforage.js"></script> -->
     <script src="//cdnjs.cloudflare.com/ajax/libs/progress.js/0.1.0/progress.min.js"></script>
 
@@ -488,6 +484,17 @@ lying internet</textarea>
     <a href="https://github.com/wassname/keywordshitter2"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
     <!-- Fork me on github... Do you get it? Do you! -->
 
+    <!-- Lets see if anyone ever uses this  -->
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-51809277-6', 'auto');
+      ga('send', 'pageview');
+
+    </script>
     <script>
     $(document).ready(function () {
         KWS.init();

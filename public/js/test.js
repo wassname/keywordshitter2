@@ -84,7 +84,8 @@ describe('services', function() {
     this.slow(2000);
 
     // data
-    var services = ["google", "google news", "google shopping", "google books", "youtube", "google videos", "google images", "yahoo", "bing", "ebay", "amazon", "twitter", "baidu", "yandex"];
+    // var services = ["google", "google news", "google shopping", "google books", "youtube", "google videos", "google images", "yahoo", "bing", "ebay", "amazon", "twitter", "baidu", "yandex"];
+    var services = Object.keys(KWS.services);
     var searches = ["where"];
     var searchesDifficult = [" * ", "❥"];
 
