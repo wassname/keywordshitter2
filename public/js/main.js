@@ -768,16 +768,32 @@ var KWS = function(){
                                  extend: 'csvHtml5',
                                  fieldBoundary: "",
                                  text: 'Copy keywords',
-                                 // 'customize': function(data,options){return data.split('\n').join(',');},
+                                //  'customize': function(data,options){
+                                //      console.log(data,options);return data.split('\n').join(',');
+                                //  },
                                  header: false,
                                  exportOptions: {
                                      stripNewlines: true,
                                      stripHtml: true,
                                      decodeEntities: true,
-                                     columns: 'keyword',
-                                     // format:{
-                                     //     body: function(html,i){console.log(html);return html}
-                                     // }
+                                     columns: 1,
+                                    //  format:{
+                                    //      body: function(html,i){
+                                    //          console.log(html);return html
+                                    //      }
+                                    //  }
+                                 }
+                             },
+                             {
+                                 extend: 'csvHtml5',
+                                 fieldBoundary: "",
+                                 text: 'Copy visible columns',
+                                 header: false,
+                                 exportOptions: {
+                                     columns: ':visible',
+                                     stripNewlines: true,
+                                     stripHtml: true,
+                                     decodeEntities: true,
                                  }
                              },
                          ]

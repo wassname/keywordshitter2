@@ -2,7 +2,7 @@
   "name": "keywordshitter2",
   "version": "0.0.5",
   "description": "The second generation of keyword shitter. Bigger, better, and more pungent than other products.",
-  "main": "server.js",
+  "main": "public/js/main.js",
   "repository": "https://github.com/wassname/keywordshitter2",
   "scripts": {
     "test": "public/test.html",
