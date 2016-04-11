@@ -1,7 +1,6 @@
 var KWS = function(){
 
     return {
-        db:undefined,
         table: undefined,
         myIp: undefined,
         options: {},
@@ -49,17 +48,17 @@ var KWS = function(){
          * Get the service url based on options set in the dom.
          * @return {String} A jsonp url for search suggestions with query missing from the end.
          */
-        getUrl :function(){
+        getUrl :function(service, options){
             // Ref: https://github.com/estivo/Instantfox/blob/master/firefox/c1hrome/content/defaultPluginList.js
             // Ref: https://github.com/bnoordhuis/mozilla-central/tree/master/browser/locales/en-US/searchplugins
             // Ref: https://developers.google.com/custom-search/json-api/v1/reference/cse/list
             // https://developers.google.com/custom-search/docs/ref_languages
-            return _.template(this.services[this.options.service])(this.options);
+            return _.template(this.services[(service||this.options.service)])(options||this.options);
         },
 
 
         /** Parse response per service **/
-        parseServiceResponse: function(res){
+        parseServiceResponse: function(res, service){
             // Each take a json response tand return a keyword array
             RESPONSE_TEMPLATES = {
                 // opensearch default
@@ -91,53 +90,8 @@ var KWS = function(){
                 "google play movies": function(res){return _.map(res,'s')},
                 "google play books": function(res){return _.map(res,'s')},
             };
-            var parser = RESPONSE_TEMPLATES[this.options.service] || RESPONSE_TEMPLATES["default"];
+            var parser = RESPONSE_TEMPLATES[(service||this.options.service)] || RESPONSE_TEMPLATES["default"];
             return parser(res);
-        },
-
-        setUpDb: function(success){
-            var self=this;
-            // setup a db. Ref: https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB
-            var dbReq = window.indexedDB.open("KeywordShitter2", 3);
-            /** Error handler for all child transactions as events bubbe up **/
-            dbReq.onerror = function (event) {
-                return console.error('Error opening indexedDB database KeywordShitter2', event);
-            };
-            dbReq.onsuccess = function (event) {
-                self.db = event.target.result;
-                self.db.onerror = function (event) {
-                    // Generic error handler requests
-                    if (event && event.target && event.target.error)
-                        console.error("Database error",event.target.error.errorCode, event.target.error.message, event);
-                    else
-                        console.error("Database error",arguments);
-                    return this;
-                };
-                if (success) success(self.db,dbReq);
-                return self.db;
-            };
-            dbReq.onupgradeneeded = function (event) {
-                console.log("running onupgradeneeded");
-                self.db = event.target.result;
-
-                if (!self.db.objectStoreNames.contains("suggestions")) {
-                    var objectStore = self.db.createObjectStore("suggestions", {
-                        autoIncrement: true, keyPath: 'id'
-                    });
-                    // Create an index to search suggestions by
-                    // he query that prompted the suggestion
-                    if (!objectStore.indexNames.contains('search'))
-                        objectStore.createIndex("search", "search", {unique: false});
-
-                    // and by suggestion/keyword
-                    if (!objectStore.indexNames.contains('keyword'))
-                        objectStore.createIndex("keyword", "keyword", {unique: false});
-
-                }
-
-                return self.db;
-            };
-            return dbReq;
         },
 
         toggleWork: function(){
@@ -287,60 +241,6 @@ var KWS = function(){
             return newInputs;
         },
 
-        /** export db as json **/
-        exportDB: function(success){
-            var reqObj = this.db.transaction(["suggestions"],"readonly")
-                .objectStore("suggestions")
-                .getAll();
-                reqObj.onsuccess = function(e) {
-                    var blob, name;
-                    if (e.target.result.length){
-                        var jsonData = JSON.stringify(e.target.result);
-                        blob = new Blob([jsonData], {type: "octet/stream"});
-                        var timeStamp = (new Date()).toISOString().replace(/[:\.]/g,'_').slice(0,-5);
-                        name = 'keywordshitter_'+timeStamp+'_r'+e.target.result.length+'.json';
-                        saveAs(blob,name);
-                        if (success instanceof Function) success(blob);
-                    }
-                    return blob;
-                };
-                return reqObj;
-        },
-
-        clearDB: function(){
-            this.db.transaction(["suggestions"], "readwrite")
-                .objectStore("suggestions")
-                .clear();
-            console.warn('cleared all indexedDB data');
-        },
-
-        /** Display data from db upon pressing load button **/
-        loadFromDB: function(){
-            var self = this;
-            var reqObj = this.db.transaction(["suggestions"],"readonly")
-                .objectStore("suggestions")
-                .getAll()
-                .onsuccess = function(e) {
-                    if (e.target.result.length){
-                        /// grab the fields we want
-                        var data =[];
-                        for (var i = 0; i < e.target.result.length; i++) {
-                            var da = e.target.result[i];
-
-                            // also remove undefined so datatables doesn't bring up alerts
-                            da = _.mapValues(da, function(v){return v===undefined ? null: v;});
-
-                            // parse nums
-                            // da = da.map(v => /^[\d+\.]+$/.test(v) ? Number(v): v);
-                            //
-                            data.push(da);
-                        }
-                        self.table.rows.add(data);
-                        return self.table.draw(false);
-                    }
-                };
-                return;
-        },
 
         /** Display results **/
         displayResults: function(retList, search, dontDisplay, url,data){
@@ -411,49 +311,6 @@ var KWS = function(){
             return domain;
         },
 
-        /** Store new results in db and hashmap **/
-        storeResults: function(retList, search, url){
-            var self = this;
-            retList=retList.map(this.CleanVal);
-
-            // We will add the items async in order
-            // Ref: http://stackoverflow.com/a/13666741/221742
-            var transaction = this.db.transaction(["suggestions"], "readwrite");
-            var store = transaction.objectStore("suggestions");
-            var i=0;
-            addNext();
-
-            /** Like an async for loop to add each to db **/
-            function addNext() {
-                if (i<retList.length) {
-                        var cleanKw = retList[i];
-                        if (cleanKw.length){
-                        addReq = store.add({
-                            keyword: cleanKw,
-                            length: cleanKw.length,
-                            words: cleanKw.trim().split(/ +/).length,
-                            search: search,
-                            ip: this.myIp,
-                            url: url,
-                            domain: self.extractDomain(url),
-                            time: (new Date()).toUTCString(),
-                        });
-                        addReq.onsuccess = addNext;
-
-                        ++i;
-                        return addReq;
-                    } else {
-                        // skip empty keywords
-                        ++i;
-                        return addNext.bind(this)();
-                    }
-                } else {
-                    return;// console.debug('populate complete for suggestions of ', search);
-                }
-            }
-
-        },
-
         /** mark a search as done in the queue **/
         markAsDone: function(search){
             // mark as done in queue
@@ -481,61 +338,38 @@ var KWS = function(){
             var self = this;
             this.queryLock = true;
 
-            // first check in db
-            var reqObj = this.db.transaction(["suggestions"],"readonly")
-                .objectStore("suggestions")
-                .index("search")
-                .getAll(search);
-            reqObj.onsuccess = function(e) {
-                    var domain = self.extractDomain(self.getUrl());
-                    var results = e.target.result.filter(function(r){return r.domain==domain;});
-                    // console.log(e.target.result);
-                    if (results.length){
-                        // search was done previously so display results from db
-                        var retList=_.map(results,'keyword');
-                        self.markAsDone(search);
-                        self.displayResults(retList,search,undefined,undefined,results);
+            // search not done, lets do the query
+            url = self.getUrl()+search;
+            var promise = $.ajax({
+                url: url,
+                // jsonp: "jsonp",
+                dataType: "jsonp",
+                success: function (res, statusText, jqXHR) {
+                    var retList = self.parseServiceResponse(res);
+                    if (retList && retList.length){
+                        // self.storeResults(retList, search, this.url);
+                        self.displayResults(retList, search, undefined, this.url);
                         self.addResultsToQueue(retList);
                         if (self.options.keepRunning) self.permuteResultsToQueue(retList);
-                        self.queryLock = false;
+                        self.markAsDone(search);
+                    } else {
+                        // console.debug('No suggestions for query: "',search,'"');
+                        self.markAsNone(search);
                     }
-                    else {
-                        // search not done, lets do the query
-                        url = self.getUrl()+search;
-                        $.ajax({
-                            url: url,
-                            // jsonp: "jsonp",
-                            dataType: "jsonp",
-                            success: function (res, statusText, jqXHR) {
+                    self.queryLock = false;
+                    return;
 
-                                var retList = self.parseServiceResponse(res);
-                                var char, currentx;
-                                if (retList && retList.length){
-                                    self.storeResults(retList, search, this.url);
-                                    self.displayResults(retList, search, undefined, this.url);
-                                    self.addResultsToQueue(retList);
-                                    if (self.options.keepRunning) self.permuteResultsToQueue(retList);
-                                    self.markAsDone(search);
-                                } else {
-                                    // console.debug('No suggestions for query: "',search,'"');
-                                    self.markAsNone(search);
-                                }
-                                self.queryLock = false;
-                                return;
-
-                            },
-                            error: function(jqXHR,errorText,error){
-                                console.error(errorText,this.url,this,jqXHR,error);
-                                self.queryLock = false;
-                                return;
-                            },
-                            callback: function(){
-                                console.log(this,arguments);
-                            }
-                        });
-                    }
-                };
-                return reqObj;
+                },
+                error: function(jqXHR,errorText,error){
+                    console.error(errorText,this.url,this,jqXHR,error);
+                    self.queryLock = false;
+                    return;
+                },
+                callback: function(){
+                    console.log(this,arguments);
+                }
+            });
+            return promise;
         },
 
         /** Clean input, may not all be needed **/
@@ -685,7 +519,7 @@ var KWS = function(){
 
         /** load settings from localStorage **/
         loadSettings: function(){
-            // TODO do table settings as well, e.g. column visibilitity
+            // Tabe settings are auto handles by datatables
             if (localStorage.service) $("#service").val( localStorage.service );
             if (localStorage.country) $('#country').val(localStorage.country);
             if (localStorage.lang) $('#lang').val(localStorage.lang);
@@ -721,7 +555,7 @@ var KWS = function(){
         },
 
         init: function(){
-            this.setUpDb();
+            // this.setUpDb();
 
             // add this.servicess to search engine settings
             for (var service in this.services) {
@@ -739,15 +573,11 @@ var KWS = function(){
             $('#progress1').addClass('progressjs-progress');
             this.progress1 = progressJs("#progress1");
 
-
+            // bind buttons
             $('#startjob').on('click',this.toggleWork.bind(this));
             $('#reset').on('click',this.reset.bind(this));
-            $('#load-from-cache').on('click',this.loadFromDB.bind(this));
-            $('#export-from-cache').on('click',this.exportDB.bind(this));
-            $('#clear-cache').on('click',this.clearDB.bind(this));
 
-
-
+            // setup table
             this.table = $('#outtable').DataTable({
                 pageLength: 25,
                 "lengthMenu": [ 10, 25, 50, 75, 100,800],
@@ -807,6 +637,7 @@ var KWS = function(){
                     "targets": 0,
                     "visible": false,
                 }, {
+                    "name": "keyword",
                     "title": "Keyword",
                     "data": "keyword",
                     "responsivePriority": 1,
@@ -865,6 +696,7 @@ var KWS = function(){
                 // scroller:       true
             });
 
+            // get user ip
             $.getJSON('https://api.ipify.org?format=json', function (data) {
                 this.myIp = data.ip;
             });
