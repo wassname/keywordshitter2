@@ -16,32 +16,12 @@ describe('permute', function(){
     it('should correctly permute results and add to queue', function() {
         var retList = ['a','b','c d',' a longer one'];
         KWS.permuteResultsToQueue(retList,'test');
-        assert(KWS.keywordsToQuery.length>0);
-        assert(KWS.hashMapInputs['b']);
-        assert(KWS.hashMapInputs['test']);
+        expect(KWS.keywordsToQuery).to.have.length.above(0)
+        // assert(KWS.hashMapInputs['b']);
+        expect(KWS.hashMapInputs).to.include.key('test');
         // var options = KWS.getOptions();
         // var expectedLength = options.prefixes.length*retList.length+options.suffixes.length*retList.length
         // assert(KWS.keywordsToQuery.length==expectedLength,''+expectedLength+'!='+KWS.keywordsToQuery.length);
-    });
-});
-
-// TODO use localForage or most popular promise wrapper for indexedDB then test
-// describe('exportDB', function(){
-// });
-
-describe('db', function() {
-    it('should correctly set up db', function(done) {
-        var dbReq=KWS.setUpDb();
-        var oldonsuccess=dbReq.onsuccess;
-        dbReq.onsuccess=function(event){
-            // override onld onsucess because it doesn't use promises
-            var db=oldonsuccess.bind(dbReq)(event);
-            assert(db);
-            assert(db.objectStoreNames.contains('suggestions'),'db should contain suggestons store');
-            var indexNames =db.transaction('suggestions','readonly').objectStore('suggestions').indexNames;
-            assert(indexNames.contains('keyword','search'));
-            done();
-        };
     });
 });
 
@@ -66,11 +46,10 @@ describe('responses', function(){
         if (testData.responses.hasOwnProperty(service)) {
             it('should correctly parse test data for service='+service, function() {
                 var res = testData.responses[service];
-                var options = {service:service};
-                var parsedRes = KWS.parseServiceResponse(res,options);
+                var parsedRes = KWS.parseServiceResponse(res,service);
 
-                assert.typeOf(parsedRes,'array');
-                expect(parsedRes).to.have.length.above(1);
+                expect(parsedRes).to.be.an('array')
+                    .that.has.length.above(1);
                 parsedRes.map(r => assert.typeOf(r, 'string'));
             });
         }
@@ -101,8 +80,7 @@ describe('services', function() {
     services.forEach(function(service){
         searches.forEach(function(search){
             it('should correctly get and parse data'+'. Service="'+service+'" search="'+search+'"', function(done) {
-                var options = {service:service};
-                var url = KWS.getUrl(options)+search;
+                var url = KWS.getUrl(service)+search;
                 return $.ajax({
                     url: url,
                     async: false,
@@ -111,7 +89,7 @@ describe('services', function() {
                     success: function (res, statusText, jqXHR) {
                             assert(statusText=="success");
                             assert(res!==[]);
-                            var parsedRes = KWS.parseServiceResponse(res,options);
+                            var parsedRes = KWS.parseServiceResponse(res,service);
                             assert.typeOf(parsedRes,'array');
                             parsedRes.map(r => assert.typeOf(r, 'string'));
                             done();
@@ -129,8 +107,7 @@ describe('services', function() {
     services.forEach(function(service){
         searchesDifficult.forEach(function(search){
             it('should get and parse difficult data'+'. Service="'+service+'" search="'+search+'"', function(done) {
-                var options = {service:service};
-                var url = KWS.getUrl(options)+search;
+                var url = KWS.getUrl(service)+search;
                 return $.ajax({
                     url: url,
                     async: false,
@@ -140,7 +117,7 @@ describe('services', function() {
                         assert(statusText=="success");
                         assert(res!==[]);
 
-                        var parsedRes = KWS.parseServiceResponse(res,options);
+                        var parsedRes = KWS.parseServiceResponse(res,service);
                         assert.typeOf(parsedRes,'array');
                         parsedRes.map(r => assert.typeOf(r, 'string'));
                         return done();
