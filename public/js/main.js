@@ -12,87 +12,10 @@ var KWS = function(){
         keywordsToQuery: [],
         keywordsToQueryIndex: 0,
         numOfInitialKeywords: 0,
-        services:{
-            "google":
-            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&gl=${country}&callback=?&q=",
-            "google news":
-            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=n&gl=${country}&callback=?&q=",
-            "google shopping":
-            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=sh&gl=${country}&callback=?&q=",
-            "google books":
-            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=bo&gl=${country}&callback=?&q=",
-            "youtube":
-            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=yt&gl=${country}&callback=?&q=",
-            "google videos":
-            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=v&gl=${country}&callback=?&q=",
-            "google images":
-            "http://suggestqueries.google.com/complete/search?client=chrome&hl=${lang}&ds=i&gl=${country}&callback=?&q=",
-            "yahoo":
-            "https://search.yahoo.com/sugg/ff?output=jsonp&appid=ffd&callback=?&command=",
-            "bing": "http://api.bing.com/osjson.aspx?JsonType=callback&JsonCallback=?&query=",
-            "ebay":
-            "http://autosug.ebay.com/autosug?_jgr=1&sId=0&_ch=0&callback=?&kwd=",
-            "amazon":
-            "http://completion.amazon.co.uk/search/complete?method=completion&search-alias=aps&mkt=4&callback=?&q=",
-            "twitter":
-            "https://twitter.com/i/search/typeahead.json?count=30&result_type=topics&src=SEARCH_BOX&callback=?&q=",
-            "baidu": "http://suggestion.baidu.com/su?cb=?&wd=",
-            "yandex": "https://yandex.com/suggest/suggest-ya.cgi?callback=?&q=?&n=30&v=4&uil={lang}&part=",
-            "google play": "https://market.android.com/suggest/SuggRequest?json=1&c=0&hl=${lang}&gl=${country}&callback=?&query=", //
-            "google play apps": "https://market.android.com/suggest/SuggRequest?json=1&c=3&hl=${lang}&gl=${country}&callback=?&query=",
-            "google play movies": "https://market.android.com/suggest/SuggRequest?json=1&c=4&hl=${lang}&gl=${country}&callback=?&query=",
-            "google play books": "https://market.android.com/suggest/SuggRequest?json=1&c=1&hl=${lang}&gl=${country}&callback=?&query=",
-            // "kickasstorrents": "https://kat.cr/get_queries.php?query=", // not jsonp
-        },
-        /**
-         * Get the service url based on options set in the dom.
-         * @return {String} A jsonp url for search suggestions with query missing from the end.
-         */
-        getUrl :function(service, options){
-            // Ref: https://github.com/estivo/Instantfox/blob/master/firefox/c1hrome/content/defaultPluginList.js
-            // Ref: https://github.com/bnoordhuis/mozilla-central/tree/master/browser/locales/en-US/searchplugins
-            // Ref: https://developers.google.com/custom-search/json-api/v1/reference/cse/list
-            // https://developers.google.com/custom-search/docs/ref_languages
-            return _.template(this.services[(service||this.options.service)])(options||this.options);
-        },
 
-
-        /** Parse response per service **/
-        parseServiceResponse: function(res, service){
-            // Each take a json response tand return a keyword array
-            RESPONSE_TEMPLATES = {
-                // opensearch default
-                "default": function (res) {
-                    return res[1];
-                },
-                "yahoo": function (res) {
-                    return _.map(res.gossip.results, 'key');
-                },
-                "ebay": function (res) {
-                    return res.res ? res.res.sug : [];
-                },
-                "twitter": function (res) {
-                    return _.concat(res.users, _.map(res.topics, 'topic'), res.hashtags, res.oneclick);
-                },
-                "baidu": function (res) {
-                    return res.s;
-                },
-                "yandex": function(res){
-                    return _.map(res[1], function(r){
-                        return typeof r === 'string' ? r : r[1];
-                    });
-                },
-                "linkedin": function(res){
-                    return _.map(res.resultList,'displayName');
-                },
-                "google play": function(res){return _.map(res,'s')},
-                "google play apps": function(res){return _.map(res,'s')},
-                "google play movies": function(res){return _.map(res,'s')},
-                "google play books": function(res){return _.map(res,'s')},
-            };
-            var parser = RESPONSE_TEMPLATES[(service||this.options.service)] || RESPONSE_TEMPLATES["default"];
-            return parser(res);
-        },
+        services:suggestions.services,
+        getUrl :suggestions.getUrl,
+        parseServiceResponse: suggestions.parseServiceResponse,
 
         toggleWork: function(){
             if (this.doWork === false)
@@ -119,7 +42,7 @@ var KWS = function(){
 
                 // get queries from the input
                 var ks = $('#input').val().split("\n");
-                this.keywordsToQuery=ks.map(this.CleanVal);
+                this.keywordsToQuery=_.map(ks,this.CleanVal);
 
 
                 // add variations of the initial terms
@@ -192,7 +115,7 @@ var KWS = function(){
         },
 
         addResultsToQueue: function(retList, search){
-            retList=retList.map(this.CleanVal);
+            retList=_.map(retList,this.CleanVal);
 
             // add each result to list first before permutations
             for (var j = 0; j < retList.length; j++) {
@@ -209,6 +132,7 @@ var KWS = function(){
         permuteResultsToQueue: function(retList, search){
             var chr, currentx, currentKw;
             var self = this;
+            var options = this.getOptions()
 
             this.hashMapInputs[search] = true;
 
@@ -224,14 +148,14 @@ var KWS = function(){
                 return s+' '+suffix;
             }
             // clean
-            retList=retList.map(this.CleanVal);
+            retList=_.map(retList,this.CleanVal);
 
             // get permutations
             var newInputs = retList.reduce(function(result, keyword){
                 return _.concat(
                     result,
-                    self.options.prefixes.map(addPrefix.bind(self,keyword)),
-                    self.options.suffixes.map(addSuffix.bind(self,keyword))
+                    _.map(options.prefixes,addPrefix.bind(self,keyword)),
+                    _.map(options.suffixes,addSuffix.bind(self,keyword))
                 );
             }, []);
 
@@ -246,7 +170,7 @@ var KWS = function(){
         displayResults: function(retList, search, dontDisplay, url,data){
 
             var rows=[];
-            retList=retList.map(this.CleanVal);
+            retList=_.map(retList,this.CleanVal);
             for (var i = 0; i < retList.length; i++) {
                 var  cleanKw = retList[i];
 
