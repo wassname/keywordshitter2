@@ -35,7 +35,7 @@ var suggestions = function(){
             "ebay":
             "http://autosug.ebay.com/autosug?_jgr=1&sId=0&_ch=0&callback=?&kwd=",
             "amazon":
-            "http://completion.amazon.co.uk/search/complete?method=completion&search-alias=aps&mkt=4&callback=?&q=",
+            "http://completion.amazon.co.uk/search/complete?method=completion&search-alias=aps&mkt=3&callback=?&q=",
             "twitter":
             "https://twitter.com/i/search/typeahead.json?count=30&result_type=topics&src=SEARCH_BOX&callback=?&q=",
             "baidu": "http://suggestion.baidu.com/su?cb=?&wd=",
